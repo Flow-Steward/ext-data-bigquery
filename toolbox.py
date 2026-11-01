@@ -60,6 +60,7 @@ def managed_config(config, secrets, command, arguments, ip=None):
         "maxQueryResultRows": 100,
         "maximumBytesBilled": config["maximum_bytes_billed"],
         "workflowJobID": config.get("job_id", ""),
+        "workflowTables": config.get("tables", []),
     }
     tool = {
         "kind": "tool",

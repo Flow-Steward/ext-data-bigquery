@@ -2,10 +2,10 @@
 
 `flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.3.0 (`b0010060a939455d91e4f8ba62dc3e72b1892469`) binary:
 
-- **Query rows**: one GoogleSQL SELECT (including WITH), up to 100 rows, with job metadata and an explicit `truncated` flag.
+- **Query rows**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
 - **Execute DML**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
 
-There are no triggers, DDL, scripts, sessions, load/export jobs, external URL inputs, remote functions, stored routines, views or external tables. Only ordinary native tables in the connection's Google project and explicit dataset allowlist are supported. All table identifiers should use fully qualified backticks: `project.dataset.table`. Google dry-run metadata independently validates the statement type, referenced datasets and ordinary table metadata before the execution job is submitted. Supported built-in SQL functions are intentionally conservative; see `commands.py`.
+There are no triggers, DDL, scripts, sessions, load/export jobs, external URL inputs, remote functions, stored routines, views or external tables. Only ordinary native tables in the connection's Google project and explicit dataset allowlist are supported. Physical table targets must use fully qualified backticks: `project.dataset.table`. Google dry-run metadata independently validates the statement type, referenced datasets and ordinary table metadata (including every explicit SQL table identifier independently of provider expansion) before the execution job is submitted. WITH/CTE statements and comma joins are unsupported; use explicit JOIN syntax. Fewer than 50 explicit table references are accepted; native dry-run metadata also fails closed at 50 references. Supported built-in SQL functions are intentionally conservative; see `commands.py`.
 
 ## Connection
 
@@ -22,7 +22,7 @@ The subprocess receives a minimal environment without inherited proxies, credent
 
 Each action accepts `connection_ref`, `statement`, and optional `parameters`: an array of `{ "name": "value", "type": "STRING", "value": "hello" }`. Use `@value` in SQL. Types are STRING, BOOL, FLOAT64 and INT64; integers must fit the safe JSON range ±9007199254740991, floats must be finite, NULL/arrays/structs are not supported as parameters. Values use native Google query parameter binding; they are not interpolated into SQL. Comments, semicolons, template syntax and positional parameters are rejected conservatively, including when found inside literals.
 
-Results include `rows`, `job_id`, `project`, `location`, `statement_type`, `total_rows`, `truncated`, and (when supplied by Google) `affected_rows`, `bytes_processed`, `bytes_billed`. BigQuery NUMERIC/BIGNUMERIC results use the upstream decimal-string normalizer; BYTES are base64. No returned page is automatically replayed. Use an explicitly new bounded query for further reading.
+Results include `rows`, `job_id`, `project`, `location`, `statement_type`, `total_rows`, `truncated`, and (when supplied by Google) `affected_rows`, `bytes_processed`, `bytes_billed`. MERGE row counts sum the native DML mutation statistics and are omitted when unavailable. BigQuery NUMERIC/BIGNUMERIC results use the upstream decimal-string normalizer; BYTES are base64. No returned page is automatically replayed. Use an explicitly new bounded query for further reading.
 
 Write job IDs are deterministic hashes of account, project, connection, effect claim, SQL and parameters. The native client sets `JobID` without a random suffix. No application retry is performed. An error or timeout after dispatch returns `retryable: false`, `external_effect_status: timeout_unknown`, and the deterministic job identity. A BigQuery job may continue after the local process exits. Inspect the job in Google Cloud by project/location/job ID before deciding whether a manual retry is safe. A duplicate job-ID response is not treated as a fresh successful write. Stable job identity reduces duplicate submission risk; it is not an assertion that arbitrary manual replays are exactly-once.
 

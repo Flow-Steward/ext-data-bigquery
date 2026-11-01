@@ -41,6 +41,7 @@ FUNCTIONS = {
     "ARRAY",
     "IN",
     "VALUES",
+    "INSERT",
     "OVER",
     "AS",
     "ROW_NUMBER",
@@ -63,7 +64,7 @@ def compile_command(name, args, config, context, connection_id):
     scrub = re.sub(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", "''", statement)
     kind = re.match(r"\s*([A-Za-z]+)", scrub)
     require(kind is not None, "One SQL statement is required.")
-    allowed = {"SELECT", "WITH"} if name == "query" else {"INSERT", "UPDATE", "DELETE", "MERGE"}
+    allowed = {"SELECT"} if name == "query" else {"INSERT", "UPDATE", "DELETE", "MERGE"}
     require(
         (kind.group(1).upper() if kind else "") in allowed,
         "Use the action matching the SQL statement type.",
@@ -76,7 +77,60 @@ def compile_command(name, args, config, context, connection_id):
         ),
         "Unsupported SQL capability.",
     )
-    for identifier in re.findall(r"`([^`]+)`", scrub):
+    # Physical table targets are always explicit backticked identifiers. This
+    # also avoids relying on potentially incomplete provider reference metadata.
+    references = re.findall(r"`([^`]+)`", scrub)
+    require(len(references) < 50, "At most 49 explicit table references are supported.")
+    for target in re.finditer(
+        r"\b(FROM|JOIN|USING|UPDATE|INSERT|DELETE|INTO|MERGE)\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*|\()",
+        scrub,
+        re.I,
+    ):
+        keyword, identifier = target.group(1).upper(), target.group(2)
+        if (keyword, identifier.upper()) in {("INSERT", "INTO"), ("DELETE", "FROM")}:
+            continue  # Optional INTO/FROM introducers are checked separately.
+        if kind is not None and kind.group(1).upper() == "MERGE":
+            if (keyword, identifier.upper()) in {("INSERT", "ROW"), ("DELETE", "WHEN")}:
+                continue  # MERGE action clauses introduce no additional table.
+        if keyword == "UPDATE" and identifier.upper() == "SET":
+            continue  # MERGE WHEN MATCHED THEN UPDATE SET ...
+        if keyword == "MERGE" and identifier.upper() == "INTO":
+            continue  # The INTO token is checked separately.
+        if identifier.upper() == "UNNEST" and scrub[target.end() :].lstrip().startswith("("):
+            continue
+        require(
+            identifier.startswith("`") or identifier == "(",
+            "Physical tables must use fully qualified backticked identifiers.",
+        )
+    # Comma joins would introduce additional physical targets without a JOIN
+    # keyword. Require explicit JOIN syntax; commas inside functions stay valid.
+    depth = 0
+    from_levels: set[int] = set()
+    for token in re.findall(r"`[^`]*`|[A-Za-z_][A-Za-z0-9_]*|[^\s]", scrub):
+        keyword = token.upper()
+        if token == "(":
+            depth += 1
+        elif token == ")":
+            from_levels.discard(depth)
+            depth = max(0, depth - 1)
+        elif keyword == "FROM":
+            from_levels.add(depth)
+        elif keyword in {
+            "WHERE",
+            "GROUP",
+            "ORDER",
+            "LIMIT",
+            "HAVING",
+            "QUALIFY",
+            "WINDOW",
+            "UNION",
+            "EXCEPT",
+            "INTERSECT",
+        }:
+            from_levels.discard(depth)
+        elif token == ",":
+            require(depth not in from_levels, "Use explicit JOIN syntax with backticked tables.")
+    for identifier in references:
         require(
             re.fullmatch(
                 r"[a-z][a-z0-9-]*\.[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*", identifier
@@ -165,6 +219,7 @@ def compile_command(name, args, config, context, connection_id):
                     ).encode()
                 ).hexdigest()
             )
+    config["tables"] = list(dict.fromkeys(references))
     config["write_mode"] = "allowed" if name == "write" else "blocked"
     return {"type": "bigquery-sql", "statement": statement, "parameters": metadata}, values
 

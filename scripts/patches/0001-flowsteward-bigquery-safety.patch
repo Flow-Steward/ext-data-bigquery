@@ -9,12 +9,13 @@
  	"fmt"
  	"math/big"
  	"net/http"
-@@ -80,7 +82,8 @@
+@@ -80,7 +82,9 @@
  
  type Config struct {
  	// BigQuery configs
 -	Name                      string              `yaml:"name" validate:"required"`
 +	WorkflowJobID string `yaml:"workflowJobID"`
++ WorkflowTables []string `yaml:"workflowTables"`
 + Name                      string              `yaml:"name" validate:"required"`
  	Type                      string              `yaml:"type" validate:"required"`
  	Project                   string              `yaml:"project" validate:"required"`
@@ -34,7 +35,7 @@
  		if err != nil {
  			return nil, fmt.Errorf("error creating client from ADC: %w", err)
  		}
-@@ -570,63 +579,63 @@
+@@ -570,63 +579,78 @@
  	return bqClient, restService, nil
  }
  
@@ -42,12 +43,19 @@
 +func (s *Source) ValidateWorkflowDryRun(ctx context.Context, job *bigqueryrestapi.Job) error {
 + if job == nil || job.Statistics == nil || job.Statistics.Query == nil { return fmt.Errorf("missing dry run metadata") }
 + stats := job.Statistics.Query
++ if len(stats.ReferencedTables) >= 50 || len(s.WorkflowTables) >= 50 { return fmt.Errorf("too many table references to verify completely") }
 + allowed := stats.StatementType == "SELECT"
 + if s.WriteMode == WriteModeAllowed { allowed = stats.StatementType == "INSERT" || stats.StatementType == "UPDATE" || stats.StatementType == "DELETE" || stats.StatementType == "MERGE" }
 + if !allowed { return fmt.Errorf("statement type is not permitted by workflow action") }
 + if len(s.AllowedDatasets) == 0 { return fmt.Errorf("explicit dataset allowlist required") }
 + if len(stats.ReferencedRoutines) != 0 { return fmt.Errorf("stored routines unsupported") }
-+ for _, table := range stats.ReferencedTables {
++ tables := append([]*bigqueryrestapi.TableReference(nil), stats.ReferencedTables...)
++ for _, explicit := range s.WorkflowTables {
++  parts := strings.Split(explicit, ".")
++  if len(parts) != 3 { return fmt.Errorf("fully qualified workflow table required") }
++  tables = append(tables, &bigqueryrestapi.TableReference{ProjectId:parts[0],DatasetId:parts[1],TableId:parts[2]})
++ }
++ for _, table := range tables {
 +  if table.ProjectId != s.Project || !s.IsDatasetAllowed(table.ProjectId, table.DatasetId) { return fmt.Errorf("table outside allowed project datasets") }
 +  meta, err := s.Client.DatasetInProject(table.ProjectId, table.DatasetId).Table(table.TableId).Metadata(ctx)
 +  if err != nil { return fmt.Errorf("unable to verify ordinary table") }
@@ -131,6 +139,7 @@
 + if statementType == "SELECT" {
 +  it, err := job.Read(ctx)
 +  if err != nil { return nil, fmt.Errorf("unable to read query results") }
++  it.PageInfo().MaxSize = s.MaxQueryResultRows
 +  total = it.TotalRows
 +  for len(out) < s.MaxQueryResultRows {
 +   var val []bigqueryapi.Value
@@ -146,13 +155,20 @@
 + }
 + result := map[string]any{"rows": out, "job_id": job.ID(), "project": s.Project, "location": job.Location(), "statement_type": statementType, "total_rows": total, "truncated": total > uint64(len(out))}
 + if stats, ok := status.Statistics.Details.(*bigqueryapi.QueryStatistics); ok {
-+  result["affected_rows"] = stats.NumDMLAffectedRows
++  if count, known := workflowAffectedRows(stats, statementType); known { result["affected_rows"] = count }
 +  result["bytes_processed"] = stats.TotalBytesProcessed
 +  result["bytes_billed"] = stats.TotalBytesBilled
 + }
 + return result, nil
  }
  
++func workflowAffectedRows(stats *bigqueryapi.QueryStatistics, statementType string) (int64, bool) {
++ if stats == nil || statementType == "SELECT" { return 0, false }
++ if stats.DMLStats != nil { return stats.DMLStats.InsertedRowCount + stats.DMLStats.UpdatedRowCount + stats.DMLStats.DeletedRowCount, true }
++ if statementType == "MERGE" { return 0, false }
++ return stats.NumDMLAffectedRows, true
++}
++
  // NormalizeValue converts BigQuery specific types to standard JSON-compatible types.
 --- a/internal/tools/bigquery/bigquerysql/bigquerysql.go
 +++ b/internal/tools/bigquery/bigquerysql/bigquerysql.go
@@ -170,12 +186,13 @@
  		return nil, util.ProcessGcpError(err)
 --- /dev/null
 +++ b/internal/sources/bigquery/flowsteward_test.go
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,41 @@
 +package bigquery
 +
 +import (
 + "context"
 + "testing"
++ bigqueryapi "cloud.google.com/go/bigquery"
 + bigqueryrestapi "google.golang.org/api/bigquery/v2"
 +)
 +
@@ -201,6 +218,15 @@
 + job.Statistics.Query.ReferencedTables=nil
 + job.Statistics.Query.ReferencedRoutines=[]*bigqueryrestapi.RoutineReference{{ProjectId:"project",DatasetId:"workflow",RoutineId:"remote"}}
 + if source.ValidateWorkflowDryRun(context.Background(),job)==nil {t.Fatal("stored routine accepted")}
++ job.Statistics.Query.ReferencedRoutines=nil
++ job.Statistics.Query.ReferencedTables=make([]*bigqueryrestapi.TableReference,50)
++ if source.ValidateWorkflowDryRun(context.Background(),job)==nil {t.Fatal("incomplete reference metadata accepted")}
++}
++func TestFlowStewardMergeCounters(t *testing.T) {
++ stats := &bigqueryapi.QueryStatistics{DMLStats:&bigqueryapi.DMLStatistics{InsertedRowCount:2,UpdatedRowCount:3,DeletedRowCount:4}}
++ if count, known := workflowAffectedRows(stats,"MERGE"); !known || count != 9 { t.Fatal("MERGE mutation counts lost") }
++ if _, known := workflowAffectedRows(&bigqueryapi.QueryStatistics{},"MERGE"); known { t.Fatal("unknown MERGE count reported as zero") }
++ if count, known := workflowAffectedRows(&bigqueryapi.QueryStatistics{NumDMLAffectedRows:4},"INSERT"); !known || count != 4 { t.Fatal("INSERT count lost") }
 +}
 --- a/internal/tools/bigquery/bigquerycommon/util.go
 +++ b/internal/tools/bigquery/bigquerycommon/util.go

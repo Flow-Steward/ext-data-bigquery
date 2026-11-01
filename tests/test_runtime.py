@@ -154,3 +154,45 @@ def test_dml_compiles(calls, statement):
     )
     assert result["ok"], result
     assert calls[0][0][0]["write_mode"] == "allowed"
+    assert "test-project.workflow.t" in calls[0][0][0]["tables"]
+
+
+@pytest.mark.parametrize(
+    "action, statement",
+    [
+        ("query", "SELECT * FROM other_project.forbidden.table"),
+        ("write", "DELETE FROM other_project.forbidden.table WHERE TRUE"),
+        ("write", "INSERT other_project.forbidden.table (x) VALUES (1)"),
+        ("write", "DELETE other_project.forbidden.table WHERE TRUE"),
+    ],
+)
+def test_requires_explicit_fully_qualified_physical_tables(calls, action, statement):
+    result = main.handle(envelope(action, statement=statement, parameters=[]))
+    assert not result["ok"]
+    assert not calls
+
+
+def test_rejects_incomplete_table_metadata_threshold(calls):
+    statement = "SELECT 1 FROM " + " CROSS JOIN ".join(
+        "`test-project.workflow.t` AS t" + str(i) for i in range(50)
+    )
+    result = main.handle(envelope(statement=statement, parameters=[]))
+    assert not result["ok"]
+    assert not calls
+
+
+def test_rejects_comma_join_targets(calls):
+    result = main.handle(
+        envelope(
+            statement="SELECT 1 FROM `test-project.workflow.t` t, other.forbidden t2", parameters=[]
+        )
+    )
+    assert not result["ok"]
+    assert not calls
+
+
+def test_function_commas_remain_supported(calls):
+    result = main.handle(
+        envelope(statement="SELECT COALESCE(@x, 'fallback') AS x FROM `test-project.workflow.t`")
+    )
+    assert result["ok"], result
