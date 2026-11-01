@@ -163,6 +163,7 @@ def test_dml_compiles(calls, statement):
         ("query", "SELECT * FROM other_project.forbidden.table"),
         ("write", "DELETE FROM other_project.forbidden.table WHERE TRUE"),
         ("write", "INSERT other_project.forbidden.table (x) VALUES (1)"),
+        ("write", "INSERT INTO other_project.forbidden.table SELECT 1"),
         ("write", "DELETE other_project.forbidden.table WHERE TRUE"),
     ],
 )

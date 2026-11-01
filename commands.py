@@ -82,7 +82,7 @@ def compile_command(name, args, config, context, connection_id):
     references = re.findall(r"`([^`]+)`", scrub)
     require(len(references) < 50, "At most 49 explicit table references are supported.")
     for target in re.finditer(
-        r"\b(FROM|JOIN|USING|UPDATE|INSERT|DELETE|INTO|MERGE)\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*|\()",
+        r"(?=\b(FROM|JOIN|USING|UPDATE|INSERT|DELETE|INTO|MERGE)\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*|\())",
         scrub,
         re.I,
     ):
@@ -96,7 +96,7 @@ def compile_command(name, args, config, context, connection_id):
             continue  # MERGE WHEN MATCHED THEN UPDATE SET ...
         if keyword == "MERGE" and identifier.upper() == "INTO":
             continue  # The INTO token is checked separately.
-        if identifier.upper() == "UNNEST" and scrub[target.end() :].lstrip().startswith("("):
+        if identifier.upper() == "UNNEST" and scrub[target.end(2) :].lstrip().startswith("("):
             continue
         require(
             identifier.startswith("`") or identifier == "(",
