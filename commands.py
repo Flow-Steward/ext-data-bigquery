@@ -106,11 +106,11 @@ def compile_command(name, args, config, context, connection_id):
     # keyword. Require explicit JOIN syntax; commas inside functions stay valid.
     depth = 0
     from_levels: set[int] = set()
-    for token in re.findall(r"`[^`]*`|[A-Za-z_][A-Za-z0-9_]*|[^\s]", scrub):
-        keyword = token.upper()
-        if token == "(":
+    for lexeme in re.findall(r"`[^`]*`|[A-Za-z_][A-Za-z0-9_]*|[^\s]", scrub):
+        keyword = lexeme.upper()
+        if lexeme == "(":
             depth += 1
-        elif token == ")":
+        elif lexeme == ")":
             from_levels.discard(depth)
             depth = max(0, depth - 1)
         elif keyword == "FROM":
@@ -128,7 +128,7 @@ def compile_command(name, args, config, context, connection_id):
             "INTERSECT",
         }:
             from_levels.discard(depth)
-        elif token == ",":
+        elif lexeme == ",":
             require(depth not in from_levels, "Use explicit JOIN syntax with backticked tables.")
     for identifier in references:
         require(
