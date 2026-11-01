@@ -1,0 +1,35 @@
+# BigQuery workflow extension
+
+`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.3.0 (`b0010060a939455d91e4f8ba62dc3e72b1892469`) binary:
+
+- **Query rows**: one GoogleSQL SELECT (including WITH), up to 100 rows, with job metadata and an explicit `truncated` flag.
+- **Execute DML**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
+
+There are no triggers, DDL, scripts, sessions, load/export jobs, external URL inputs, remote functions, stored routines, views or external tables. Only ordinary native tables in the connection's Google project and explicit dataset allowlist are supported. All table identifiers should use fully qualified backticks: `project.dataset.table`. Google dry-run metadata independently validates the statement type, referenced datasets and ordinary table metadata before the execution job is submitted. Supported built-in SQL functions are intentionally conservative; see `commands.py`.
+
+## Connection
+
+Set `project`, `location` (for example `US`), and `allowed_datasets` (1–32 dataset IDs in that project). `maximum_bytes_billed` defaults to 10 MiB and must be positive (maximum 1 TB). This is a per-query billing ceiling, not a total account budget. `request_timeout_seconds` defaults to 20, maximum 30. The host entrypoint timeout is 40 seconds. Returned JSON is bounded to 480 KiB; large results fail instead of automatically fetching/replaying queries.
+
+Choose exactly one secret:
+
+- `service_account_json`: a service-account JSON document whose `project_id` matches the configured project. It is written into a managed temporary file with mode 0600 and supplied through `GOOGLE_APPLICATION_CREDENTIALS`; caller file paths and other ADC forms are not accepted. OAuth token exchange uses the fixed `https://oauth2.googleapis.com/token` endpoint.
+- `access_token`: a short-lived Google OAuth bearer token. A minimal native patch passes a managed subprocess environment token into the upstream source's existing static-token client helper. The token is never placed in argv, SQL, or the Toolbox configuration. Token refresh is the caller's responsibility.
+
+The subprocess receives a minimal environment without inherited proxies, credential paths, endpoint overrides or TLS overrides. Google SDK endpoints are fixed and TLS certificate verification stays enabled. Grant only the required BigQuery job and dataset read/write permissions to the Google identity. Dataset allowlists constrain this extension; IAM remains the actual Google authorization boundary.
+
+## Parameters and results
+
+Each action accepts `connection_ref`, `statement`, and optional `parameters`: an array of `{ "name": "value", "type": "STRING", "value": "hello" }`. Use `@value` in SQL. Types are STRING, BOOL, FLOAT64 and INT64; integers must fit the safe JSON range ±9007199254740991, floats must be finite, NULL/arrays/structs are not supported as parameters. Values use native Google query parameter binding; they are not interpolated into SQL. Comments, semicolons, template syntax and positional parameters are rejected conservatively, including when found inside literals.
+
+Results include `rows`, `job_id`, `project`, `location`, `statement_type`, `total_rows`, `truncated`, and (when supplied by Google) `affected_rows`, `bytes_processed`, `bytes_billed`. BigQuery NUMERIC/BIGNUMERIC results use the upstream decimal-string normalizer; BYTES are base64. No returned page is automatically replayed. Use an explicitly new bounded query for further reading.
+
+Write job IDs are deterministic hashes of account, project, connection, effect claim, SQL and parameters. The native client sets `JobID` without a random suffix. No application retry is performed. An error or timeout after dispatch returns `retryable: false`, `external_effect_status: timeout_unknown`, and the deterministic job identity. A BigQuery job may continue after the local process exits. Inspect the job in Google Cloud by project/location/job ID before deciding whether a manual retry is safe. A duplicate job-ID response is not treated as a fresh successful write. Stable job identity reduces duplicate submission risk; it is not an assertion that arbitrary manual replays are exactly-once.
+
+## Build and verification
+
+`./scripts/build_toolbox.sh` uses a digest-pinned Go 1.26.2 Docker image with 1 CPU/2 GiB. It builds only the BigQuery source and SQL tool imports for Linux AMD64 and ARM64, retaining upstream Apache licensing and patch provenance. The builder uses shared batch caches owned and cleaned by the batch coordinator. Each release ZIP contains exactly one target ELF, its checksum/provenance, Python source, public contracts, tests and the reproducible patch. Build with `TOOLBOX_SOURCE` pointing to an unmodified local checkout at the pinned commit. Package each target with `python3 scripts/package_extension.py --runtime-target linux-amd64` (or linux-arm64).
+
+Offline tests cover host contracts, parameter guards, test-mode suppression, stable job identity, uncertainty and managed auth configuration; upstream BigQuery source, SQL tool and common utility unit suites plus added dry-run policy tests run in the native builder. Real Google Cloud integration is intentionally opt-in and skipped without credentials. No live BigQuery operation has been verified in this release environment; successful compilation and mock contracts do not imply cloud authentication, permission or service availability.
+
+References: [Google parameterized queries](https://cloud.google.com/bigquery/docs/parameterized-queries), [jobs.insert](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert), [jobs.get](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/get). API shapes were checked against those official references and pinned upstream source.

@@ -1,0 +1,22 @@
+{
+  "tag": "v1.3.0",
+  "commit": "b0010060a939455d91e4f8ba62dc3e72b1892469",
+  "go_image": "golang:1.26.2-bookworm@sha256:47ce5636e9936b2c5cbf708925578ef386b4f8872aec74a67bd13a627d242b19",
+  "source_date_epoch": 1779400183,
+  "patch": "scripts/patches/0001-flowsteward-bigquery-safety.patch",
+  "patch_sha256": "6aa79a05d7c2b38bb124407edd652e6a62c4ce7f885b641821b1595975f5140c",
+  "packages": [
+    "github.com/googleapis/mcp-toolbox/internal/sources/bigquery",
+    "github.com/googleapis/mcp-toolbox/internal/tools/bigquery/bigquerysql"
+  ],
+  "binaries": {
+    "linux-amd64": {
+      "sha256": "a356988e0b0e17b61d7f3dd22662ec7c4a16e65608839c4a1e543309a2246c69",
+      "size": 34574462
+    },
+    "linux-arm64": {
+      "sha256": "a0fe5725d4a0c0ffd41439cfcb56dd92a9121adef705ec20ab1241dea1c274f6",
+      "size": 32374910
+    }
+  }
+}

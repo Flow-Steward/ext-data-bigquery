@@ -1,0 +1,268 @@
+{
+  "operations": [
+    {
+      "operation_id": "query",
+      "display_name": "Query rows",
+      "description": "Run one bounded SELECT against allowed native tables. Up to 100 rows; truncated results require explicit follow-up.",
+      "operation_kind": "action",
+      "workflow_visible": true,
+      "connection_type_ids": [
+        "bigquery"
+      ],
+      "category": "data",
+      "inputs": [
+        {
+          "name": "connection_ref",
+          "value_type": "connection_ref",
+          "required": true,
+          "display_name": "Connection"
+        },
+        {
+          "name": "statement",
+          "value_type": "text",
+          "required": true,
+          "display_name": "SQL statement",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          }
+        },
+        {
+          "name": "parameters",
+          "value_type": "json",
+          "required": false,
+          "display_name": "Named typed parameters",
+          "schema": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "type",
+                "value"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "STRING",
+                    "INT64",
+                    "FLOAT64",
+                    "BOOL"
+                  ]
+                },
+                "value": {}
+              }
+            }
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rows",
+          "value_type": "json"
+        },
+        {
+          "name": "job_id",
+          "value_type": "text"
+        },
+        {
+          "name": "project",
+          "value_type": "text"
+        },
+        {
+          "name": "location",
+          "value_type": "text"
+        },
+        {
+          "name": "statement_type",
+          "value_type": "text"
+        },
+        {
+          "name": "total_rows",
+          "value_type": "integer"
+        },
+        {
+          "name": "truncated",
+          "value_type": "boolean"
+        },
+        {
+          "name": "affected_rows",
+          "value_type": "integer"
+        },
+        {
+          "name": "bytes_processed",
+          "value_type": "integer"
+        },
+        {
+          "name": "bytes_billed",
+          "value_type": "integer"
+        }
+      ],
+      "result_fields": [
+        "result.rows",
+        "result.job_id",
+        "result.project",
+        "result.location",
+        "result.statement_type",
+        "result.total_rows",
+        "result.truncated",
+        "result.affected_rows",
+        "result.bytes_processed",
+        "result.bytes_billed"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "unknown_action",
+        "effect_claim_required",
+        "test_mode_suppressed",
+        "authentication_failed",
+        "provider_unavailable",
+        "native_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout"
+      ]
+    },
+    {
+      "operation_id": "write",
+      "display_name": "Execute DML",
+      "description": "Run one INSERT, UPDATE, DELETE or MERGE. Durable effect claim required; writes are suppressed in test mode. On uncertain outcome inspect the returned job ID before any manual retry.",
+      "operation_kind": "action",
+      "workflow_visible": true,
+      "connection_type_ids": [
+        "bigquery"
+      ],
+      "category": "data",
+      "inputs": [
+        {
+          "name": "connection_ref",
+          "value_type": "connection_ref",
+          "required": true,
+          "display_name": "Connection"
+        },
+        {
+          "name": "statement",
+          "value_type": "text",
+          "required": true,
+          "display_name": "SQL statement",
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65536
+          }
+        },
+        {
+          "name": "parameters",
+          "value_type": "json",
+          "required": false,
+          "display_name": "Named typed parameters",
+          "schema": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "type",
+                "value"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "STRING",
+                    "INT64",
+                    "FLOAT64",
+                    "BOOL"
+                  ]
+                },
+                "value": {}
+              }
+            }
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rows",
+          "value_type": "json"
+        },
+        {
+          "name": "job_id",
+          "value_type": "text"
+        },
+        {
+          "name": "project",
+          "value_type": "text"
+        },
+        {
+          "name": "location",
+          "value_type": "text"
+        },
+        {
+          "name": "statement_type",
+          "value_type": "text"
+        },
+        {
+          "name": "total_rows",
+          "value_type": "integer"
+        },
+        {
+          "name": "truncated",
+          "value_type": "boolean"
+        },
+        {
+          "name": "affected_rows",
+          "value_type": "integer"
+        },
+        {
+          "name": "bytes_processed",
+          "value_type": "integer"
+        },
+        {
+          "name": "bytes_billed",
+          "value_type": "integer"
+        }
+      ],
+      "result_fields": [
+        "result.rows",
+        "result.job_id",
+        "result.project",
+        "result.location",
+        "result.statement_type",
+        "result.total_rows",
+        "result.truncated",
+        "result.affected_rows",
+        "result.bytes_processed",
+        "result.bytes_billed"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "unknown_action",
+        "effect_claim_required",
+        "test_mode_suppressed",
+        "authentication_failed",
+        "provider_unavailable",
+        "native_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout"
+      ]
+    }
+  ]
+}

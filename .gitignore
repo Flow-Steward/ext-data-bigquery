@@ -1,0 +1,9 @@
+/bin/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.fs-python/
+/dev-wheels/
+/dist/
+/tests/live-bigquery.local.json

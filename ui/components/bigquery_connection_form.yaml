@@ -1,0 +1,79 @@
+{
+  "component_id": "bigquery_connection",
+  "type": "connection_form",
+  "title": "BigQuery connection",
+  "description": "Fixed Google Cloud endpoints with verified TLS. Choose exactly one credential; no credential file paths. Native tables only.",
+  "data": {
+    "connection_kind": "extension",
+    "connection_type": "bigquery",
+    "config_fields": [
+      "project",
+      "location",
+      "allowed_datasets",
+      "maximum_bytes_billed",
+      "request_timeout_seconds"
+    ],
+    "secret_fields": [
+      "service_account_json",
+      "access_token"
+    ]
+  },
+  "defaults": {
+    "display_name": "BigQuery",
+    "location": "US",
+    "maximum_bytes_billed": 10485760,
+    "request_timeout_seconds": 20
+  },
+  "fields": [
+    {
+      "path": "display_name",
+      "label": "Connection name",
+      "widget": "text"
+    },
+    {
+      "path": "environment",
+      "label": "Environment",
+      "widget": "text"
+    },
+    {
+      "path": "project",
+      "label": "Project",
+      "widget": "text",
+      "required": true
+    },
+    {
+      "path": "location",
+      "label": "Location",
+      "widget": "text",
+      "required": true
+    },
+    {
+      "path": "allowed_datasets",
+      "label": "Allowed Datasets",
+      "widget": "json",
+      "required": true
+    },
+    {
+      "path": "maximum_bytes_billed",
+      "label": "Maximum Bytes Billed",
+      "widget": "integer",
+      "required": false
+    },
+    {
+      "path": "request_timeout_seconds",
+      "label": "Request Timeout Seconds",
+      "widget": "integer",
+      "required": false
+    },
+    {
+      "path": "service_account_json",
+      "label": "Service account JSON (matching Google project)",
+      "widget": "secret"
+    },
+    {
+      "path": "access_token",
+      "label": "Short-lived Google OAuth access token",
+      "widget": "secret"
+    }
+  ]
+}

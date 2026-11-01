@@ -1,0 +1,214 @@
+--- a/internal/sources/bigquery/bigquery.go
++++ b/internal/sources/bigquery/bigquery.go
+@@ -16,6 +16,8 @@
+ 
+ import (
+ 	"context"
++ "encoding/json"
++ "os"
+ 	"fmt"
+ 	"math/big"
+ 	"net/http"
+@@ -80,7 +82,8 @@
+ 
+ type Config struct {
+ 	// BigQuery configs
+-	Name                      string              `yaml:"name" validate:"required"`
++	WorkflowJobID string `yaml:"workflowJobID"`
++ Name                      string              `yaml:"name" validate:"required"`
+ 	Type                      string              `yaml:"type" validate:"required"`
+ 	Project                   string              `yaml:"project" validate:"required"`
+ 	Location                  string              `yaml:"location"`
+@@ -165,7 +168,13 @@
+ 
+ 	if strings.ToLower(r.UseClientOAuth) == "false" || r.UseClientOAuth == "" {
+ 		// Initializes a BigQuery Google SQL source
+-		client, restService, tokenSource, err = initBigQueryConnection(ctx, tracer, r.Name, r.Project, r.Location, r.ImpersonateServiceAccount, r.Scopes)
++		if token := os.Getenv("FS_BIGQUERY_ACCESS_TOKEN"); token != "" {
++            userAgent, agentErr := util.UserAgentFromContext(ctx)
++            if agentErr != nil { return nil, agentErr }
++            client, restService, err = initBigQueryConnectionWithOAuthToken(ctx, tracer, r.Project, r.Location, r.Name, userAgent, token, true)
++        } else {
++            client, restService, tokenSource, err = initBigQueryConnection(ctx, tracer, r.Name, r.Project, r.Location, r.ImpersonateServiceAccount, r.Scopes)
++        }
+ 		if err != nil {
+ 			return nil, fmt.Errorf("error creating client from ADC: %w", err)
+ 		}
+@@ -570,63 +579,63 @@
+ 	return bqClient, restService, nil
+ }
+ 
++// ValidateWorkflowDryRun rejects capabilities beyond bounded ordinary-table SQL.
++func (s *Source) ValidateWorkflowDryRun(ctx context.Context, job *bigqueryrestapi.Job) error {
++ if job == nil || job.Statistics == nil || job.Statistics.Query == nil { return fmt.Errorf("missing dry run metadata") }
++ stats := job.Statistics.Query
++ allowed := stats.StatementType == "SELECT"
++ if s.WriteMode == WriteModeAllowed { allowed = stats.StatementType == "INSERT" || stats.StatementType == "UPDATE" || stats.StatementType == "DELETE" || stats.StatementType == "MERGE" }
++ if !allowed { return fmt.Errorf("statement type is not permitted by workflow action") }
++ if len(s.AllowedDatasets) == 0 { return fmt.Errorf("explicit dataset allowlist required") }
++ if len(stats.ReferencedRoutines) != 0 { return fmt.Errorf("stored routines unsupported") }
++ for _, table := range stats.ReferencedTables {
++  if table.ProjectId != s.Project || !s.IsDatasetAllowed(table.ProjectId, table.DatasetId) { return fmt.Errorf("table outside allowed project datasets") }
++  meta, err := s.Client.DatasetInProject(table.ProjectId, table.DatasetId).Table(table.TableId).Metadata(ctx)
++  if err != nil { return fmt.Errorf("unable to verify ordinary table") }
++  if meta.Type != bigqueryapi.RegularTable || meta.ExternalDataConfig != nil { return fmt.Errorf("only ordinary native tables are supported") }
++ }
++ return nil
++}
++
+ func (s *Source) RunSQL(ctx context.Context, bqClient *bigqueryapi.Client, statement, statementType string, params []bigqueryapi.QueryParameter, connProps []*bigqueryapi.ConnectionProperty) (any, error) {
+-	query := bqClient.Query(statement)
+-	query.Location = bqClient.Location
+-	if params != nil {
+-		query.Parameters = params
+-	}
+-	if connProps != nil {
+-		query.ConnectionProperties = connProps
+-	}
+-	if s.MaximumBytesBilled > 0 {
+-		query.MaxBytesBilled = s.MaximumBytesBilled
+-	}
+-
+-	// This block handles SELECT statements, which return a row set.
+-	// We iterate through the results, convert each row into a map of
+-	// column names to values, and return the collection of rows.
+-	job, err := query.Run(ctx)
+-	if err != nil {
+-		return nil, fmt.Errorf("unable to execute query: %w", err)
+-	}
+-	it, err := job.Read(ctx)
+-	if err != nil {
+-		return nil, fmt.Errorf("unable to read query results: %w", err)
+-	}
+-
+-	out := []any{}
+-	for s.MaxQueryResultRows <= 0 || len(out) < s.MaxQueryResultRows {
+-		var val []bigqueryapi.Value
+-		err = it.Next(&val)
+-		if err == iterator.Done {
+-			break
+-		}
+-		if err != nil {
+-			return nil, fmt.Errorf("unable to iterate through query results: %w", err)
+-		}
+-		schema := it.Schema
+-		row := orderedmap.Row{}
+-		for i, field := range schema {
+-			row.Add(field.Name, NormalizeValue(val[i]))
+-		}
+-		out = append(out, row)
+-	}
+-	// If the query returned any rows, return them directly.
+-	if len(out) > 0 {
+-		return out, nil
+-	}
+-
+-	// This handles the standard case for a SELECT query that successfully
+-	// executes but returns zero rows.
+-	if statementType == "SELECT" {
+-		return "The query returned 0 rows.", nil
+-	}
+-	// This is the fallback for a successful query that doesn't return content.
+-	// In most cases, this will be for DML/DDL statements like INSERT, UPDATE, CREATE, etc.
+-	// However, it is also possible that this was a query that was expected to return rows
+-	// but returned none, a case that we cannot distinguish here.
+-	return "Query executed successfully and returned no content.", nil
++ query := bqClient.Query(statement)
++ query.Location = bqClient.Location
++ query.Parameters = params
++ query.MaxBytesBilled = s.MaximumBytesBilled
++ if s.WriteMode == WriteModeAllowed {
++  if s.WorkflowJobID == "" { return nil, fmt.Errorf("write job ID required") }
++  query.JobID = s.WorkflowJobID
++  query.AddJobIDSuffix = false
++ }
++ job, err := query.Run(ctx)
++ if err != nil { return nil, fmt.Errorf("unable to execute query") }
++ status, err := job.Wait(ctx)
++ if err != nil || status.Err() != nil { return nil, fmt.Errorf("unable to complete query job") }
++ out := []any{}
++ total := uint64(0)
++ if statementType == "SELECT" {
++  it, err := job.Read(ctx)
++  if err != nil { return nil, fmt.Errorf("unable to read query results") }
++  total = it.TotalRows
++  for len(out) < s.MaxQueryResultRows {
++   var val []bigqueryapi.Value
++   err = it.Next(&val)
++   if err == iterator.Done { break }
++   if err != nil { return nil, fmt.Errorf("unable to iterate results") }
++   row := orderedmap.Row{}
++   for i, field := range it.Schema { row.Add(field.Name, NormalizeValue(val[i])) }
++   out = append(out, row)
++   encoded, err := json.Marshal(out)
++   if err != nil || len(encoded) > 460*1024 { return nil, fmt.Errorf("exceeds result byte limit") }
++  }
++ }
++ result := map[string]any{"rows": out, "job_id": job.ID(), "project": s.Project, "location": job.Location(), "statement_type": statementType, "total_rows": total, "truncated": total > uint64(len(out))}
++ if stats, ok := status.Statistics.Details.(*bigqueryapi.QueryStatistics); ok {
++  result["affected_rows"] = stats.NumDMLAffectedRows
++  result["bytes_processed"] = stats.TotalBytesProcessed
++  result["bytes_billed"] = stats.TotalBytesBilled
++ }
++ return result, nil
+ }
+ 
+ // NormalizeValue converts BigQuery specific types to standard JSON-compatible types.
+--- a/internal/tools/bigquery/bigquerysql/bigquerysql.go
++++ b/internal/tools/bigquery/bigquerysql/bigquerysql.go
+@@ -163,7 +163,10 @@
+ 		return nil, util.ProcessGcpError(err)
+ 	}
+ 
+-	statementType := dryRunJob.Statistics.Query.StatementType
++	workflowSource, ok := source.(*bigqueryds.Source)
++ if !ok { return nil, util.NewAgentError("workflow source required", fmt.Errorf("unsupported source")) }
++ if err := workflowSource.ValidateWorkflowDryRun(ctx, dryRunJob); err != nil { return nil, util.NewAgentError("workflow SQL policy rejected query", err) }
++ statementType := dryRunJob.Statistics.Query.StatementType
+ 	resp, err := source.RunSQL(ctx, bqClient, newStatement, statementType, highLevelParams, connProps)
+ 	if err != nil {
+ 		return nil, util.ProcessGcpError(err)
+--- /dev/null
++++ b/internal/sources/bigquery/flowsteward_test.go
+@@ -0,0 +1,31 @@
++package bigquery
++
++import (
++ "context"
++ "testing"
++ bigqueryrestapi "google.golang.org/api/bigquery/v2"
++)
++
++func TestFlowStewardDryRunPolicy(t *testing.T) {
++ for _, tc := range []struct{mode,kind string; allowed bool}{
++  {WriteModeBlocked,"SELECT",true}, {WriteModeBlocked,"DELETE",false},
++  {WriteModeAllowed,"SELECT",false}, {WriteModeAllowed,"DELETE",true},
++  {WriteModeAllowed,"INSERT",true}, {WriteModeAllowed,"UPDATE",true},
++  {WriteModeAllowed,"MERGE",true}, {WriteModeAllowed,"SCRIPT",false},
++  {WriteModeAllowed,"CREATE_TABLE",false},
++ } {
++  source:= &Source{Config:Config{Project:"project",WriteMode:tc.mode},AllowedDatasets:map[string]struct{}{"project.workflow":{}}}
++  job:= &bigqueryrestapi.Job{Statistics:&bigqueryrestapi.JobStatistics{Query:&bigqueryrestapi.JobStatistics2{StatementType:tc.kind}}}
++  err:= source.ValidateWorkflowDryRun(context.Background(),job)
++  if (err==nil)!=tc.allowed { t.Fatalf("mode=%s type=%s allowed=%v err=%v",tc.mode,tc.kind,tc.allowed,err) }
++ }
++}
++func TestFlowStewardRejectsUnverifiedReferences(t *testing.T) {
++ source:= &Source{Config:Config{Project:"project",WriteMode:WriteModeBlocked},AllowedDatasets:map[string]struct{}{"project.workflow":{}}}
++ if source.ValidateWorkflowDryRun(context.Background(),nil)==nil {t.Fatal("nil dry-run accepted")}
++ job:= &bigqueryrestapi.Job{Statistics:&bigqueryrestapi.JobStatistics{Query:&bigqueryrestapi.JobStatistics2{StatementType:"SELECT",ReferencedTables:[]*bigqueryrestapi.TableReference{{ProjectId:"other",DatasetId:"workflow",TableId:"t"}}}}}
++ if source.ValidateWorkflowDryRun(context.Background(),job)==nil {t.Fatal("cross-project reference accepted")}
++ job.Statistics.Query.ReferencedTables=nil
++ job.Statistics.Query.ReferencedRoutines=[]*bigqueryrestapi.RoutineReference{{ProjectId:"project",DatasetId:"workflow",RoutineId:"remote"}}
++ if source.ValidateWorkflowDryRun(context.Background(),job)==nil {t.Fatal("stored routine accepted")}
++}
+--- a/internal/tools/bigquery/bigquerycommon/util.go
++++ b/internal/tools/bigquery/bigquerycommon/util.go
+@@ -43,6 +43,7 @@
+ 			DryRun: true,
+ 			Query: &bigqueryrestapi.JobConfigurationQuery{
+ 				Query:                sql,
++                ParameterMode: "NAMED",
+ 				UseLegacySql:         &useLegacySql,
+ 				ConnectionProperties: restConnProps,
+ 				QueryParameters:      params,

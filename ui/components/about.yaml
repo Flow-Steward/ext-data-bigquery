@@ -1,0 +1,6 @@
+{
+  "component_id": "bigquery_about",
+  "type": "markdown",
+  "title": "BigQuery",
+  "content": "Bounded SELECT and explicit DML workflow actions. No triggers. Inspect the job ID after uncertain writes."
+}

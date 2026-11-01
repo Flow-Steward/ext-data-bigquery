@@ -1,0 +1,17 @@
+Flow Steward BigQuery extension
+Copyright 2026 Flow Steward contributors
+
+This extension packages a modified Google MCP Toolbox for Databases v1.3.0,
+commit b0010060a939455d91e4f8ba62dc3e72b1892469.
+Copyright Google LLC; licensed under Apache-2.0 (included in LICENSE).
+Source: https://github.com/googleapis/mcp-toolbox
+
+The source patch adds workflow statement and dataset policy validation,
+ordinary native table verification, stable write job IDs, structured job
+metadata, bounded result output and managed short-lived OAuth authentication.
+Only the BigQuery source and SQL tool are registered. Build pins and patch
+accompany the package; native checksums are recorded in
+ toolbox-provenance.json and SHA256SUMS.
+
+This project is not affiliated with Google LLC. BigQuery and Google Cloud
+are trademarks of their respective owners.

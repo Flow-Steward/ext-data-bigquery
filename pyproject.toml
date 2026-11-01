@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["dev-wheels", ".fs-python"]
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = "(^dev-wheels/|^\\.fs-python/)"

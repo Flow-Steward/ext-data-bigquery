@@ -1,0 +1,40 @@
+{
+  "forms": [
+    {
+      "operation_id": "query",
+      "title": "Query rows",
+      "fields": [
+        {
+          "name": "statement",
+          "widget_type": "textarea",
+          "label": "SQL statement",
+          "required": true
+        },
+        {
+          "name": "parameters",
+          "widget_type": "json",
+          "label": "Named typed parameters",
+          "required": false
+        }
+      ]
+    },
+    {
+      "operation_id": "write",
+      "title": "Execute DML",
+      "fields": [
+        {
+          "name": "statement",
+          "widget_type": "textarea",
+          "label": "SQL statement",
+          "required": true
+        },
+        {
+          "name": "parameters",
+          "widget_type": "json",
+          "label": "Named typed parameters",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

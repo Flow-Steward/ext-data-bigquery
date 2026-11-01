@@ -1,0 +1,9 @@
+{
+  "page_id": "about",
+  "title": "About",
+  "components": [
+    {
+      "ref": "../components/about.yaml"
+    }
+  ]
+}

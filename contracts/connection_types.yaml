@@ -1,0 +1,79 @@
+{
+  "connection_types": [
+    {
+      "connection_type_id": "bigquery",
+      "display_name": "BigQuery",
+      "description": "Fixed Google Cloud endpoints with verified TLS. Choose exactly one credential; no credential file paths. Native tables only.",
+      "config_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "project",
+          "location",
+          "allowed_datasets"
+        ],
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 63
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "allowed_datasets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            }
+          },
+          "maximum_bytes_billed": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000,
+            "default": 10485760
+          },
+          "request_timeout_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "default": 20
+          }
+        }
+      },
+      "secret_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "service_account_json": {
+            "type": "string",
+            "maxLength": 65536,
+            "title": "Service account JSON (matching Google project)"
+          },
+          "access_token": {
+            "type": "string",
+            "maxLength": 16384,
+            "title": "Short-lived Google OAuth access token"
+          }
+        }
+      },
+      "capabilities": {
+        "test_connection": false,
+        "live_request": true,
+        "workflow_trigger": false,
+        "callback_ingress": false
+      },
+      "safety_profile": {
+        "requires_https": true,
+        "requires_host_allowlist": true,
+        "stores_secret_values": false
+      }
+    }
+  ]
+}

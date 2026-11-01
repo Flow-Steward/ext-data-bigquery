@@ -1,0 +1,9 @@
+{
+  "page_id": "connection",
+  "title": "Connections",
+  "components": [
+    {
+      "ref": "../components/bigquery_connection_form.yaml"
+    }
+  ]
+}

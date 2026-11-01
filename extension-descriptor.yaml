@@ -1,0 +1,47 @@
+{
+  "schema_version": "extension_descriptor_v1",
+  "lifecycle": {
+    "data_schema_version": 1,
+    "data_migrations": []
+  },
+  "extension_id": "flowsteward.bigquery",
+  "release_version": "1.0.0",
+  "extension_type": "service_extension",
+  "identity": {
+    "display_name": "BigQuery",
+    "description": "Bounded GoogleSQL queries and explicit DML writes through pinned Google MCP Toolbox.",
+    "tags": [
+      "bigquery",
+      "toolbox"
+    ]
+  },
+  "vendor": {
+    "vendor_name": "Flow Steward"
+  },
+  "listing": {
+    "visibility": "public_reference",
+    "category": "data"
+  },
+  "distribution": {
+    "channel": "private_byo",
+    "execution_modes": [
+      "local"
+    ],
+    "allows_self_hosted": true,
+    "requires_connected_control_plane": false,
+    "import_sources": [
+      "file"
+    ]
+  },
+  "runtime": {
+    "contract_version": "extension_host_v2",
+    "compatibility": {
+      "platform_min": "1.4.0"
+    },
+    "extension_contract_v2": {
+      "connection_types": "contracts/connection_types.yaml",
+      "operation_manifest": "contracts/operation_manifest.yaml",
+      "step_ui_manifest": "contracts/step_ui_manifest.yaml"
+    }
+  }
+}
