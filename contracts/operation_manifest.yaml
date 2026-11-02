@@ -263,6 +263,156 @@
         "response_too_large",
         "timeout"
       ]
+    },
+    {
+      "operation_id": "test_connection",
+      "display_name": "Test Connection",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset test connection.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.status",
+        "result.connector_id"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
+    },
+    {
+      "operation_id": "introspect_schema",
+      "display_name": "Introspect Schema",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset introspect schema.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.schema_snapshot",
+        "result.resources",
+        "result.resource_count"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
+    },
+    {
+      "operation_id": "validate_query",
+      "display_name": "Validate Query",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset validate query.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.valid",
+        "result.read_only",
+        "result.referenced_resources",
+        "result.output_schema"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
+    },
+    {
+      "operation_id": "preview_query",
+      "display_name": "Preview Query",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset preview query.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.rows",
+        "result.row_count",
+        "result.output_schema",
+        "result.truncated"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
+    },
+    {
+      "operation_id": "execute_template",
+      "display_name": "Execute Template",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset execute template.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.rows",
+        "result.row_count",
+        "result.output_schema",
+        "result.truncated"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
+    },
+    {
+      "operation_id": "infer_output_schema",
+      "display_name": "Infer Output Schema",
+      "workflow_visible": false,
+      "operation_kind": "action",
+      "description": "Read-only BigQuery dataset infer output schema.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "inputs": [],
+      "result_fields": [
+        "result.output_schema"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ]
     }
   ]
 }

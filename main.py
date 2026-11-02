@@ -5,6 +5,7 @@ import json
 import sys
 from flowsteward_extension_sdk import runtime_context_from_payload
 import toolbox
+import datasets
 from commands import WRITES, compile_command, normalize_result
 from validation import Failure, bounded_json, connection_values, require
 
@@ -16,19 +17,32 @@ def handle(payload):
     try:
         bounded_json(payload)
         runtime_context_from_payload(payload)
-        require(payload.get("mode") == "action", "An action invocation is required.")
+        require(
+            payload.get("mode") in {"action", "query"}, "An action or query invocation is required."
+        )
         action = payload.get("action") or {}
         name = action.get("action_id")
         args = action.get("input") or {}
         require(isinstance(args, dict), "Input must be an object.")
         bounded_json(args)
         context = payload["runtime_context"]
+        require(type(context.get("test_mode", False)) is bool, "test_mode must be boolean.")
+        if payload.get("mode") == "query":
+            result = datasets.query((payload.get("query") or {}).get("query_id"))
+            return {"ok": True, "result": result, "errors": []}
+        if name in datasets.ACTIONS:
+            result = datasets.handle(name, args, context)
+            require(
+                len(json.dumps(result, allow_nan=False).encode()) <= 480 * 1024,
+                "Dataset result exceeds host inline budget.",
+                code="response_too_large",
+            )
+            return {"ok": True, "result": result, "errors": []}
         for scope_id in ("account_id", "project_id"):
             require(
                 isinstance(context.get(scope_id), str) and bool(context[scope_id].strip()),
                 "A project-scoped account and project are required.",
             )
-        require(type(context.get("test_mode", False)) is bool, "test_mode must be boolean.")
         connection = (action.get("target") or {}).get("connection") or {}
         require(
             isinstance(connection, dict)

@@ -1,0 +1,164 @@
+--- /dev/null
++++ b/internal/tools/bigquery/bigquerylisttableids/flowsteward_metadata_test.go
+@@ -0,0 +1,88 @@
++package bigquerylisttableids
++
++import (
++    "context"
++    "fmt"
++    "io"
++    "net/http"
++    "strings"
++    "testing"
++
++    bigqueryapi "cloud.google.com/go/bigquery"
++    "github.com/googleapis/mcp-toolbox/internal/sources"
++    bqsource "github.com/googleapis/mcp-toolbox/internal/sources/bigquery"
++    "github.com/googleapis/mcp-toolbox/internal/util/parameters"
++    "google.golang.org/api/option"
++)
++
++type workflowTransport func(*http.Request) (*http.Response, error)
++func (f workflowTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
++type workflowProvider struct { source *bqsource.Source }
++func (p workflowProvider) GetSource(_ string) (sources.Source, bool) { return p.source, true }
++
++func workflowFixture(t *testing.T, response func(*http.Request, int) string) (*Tool, workflowProvider, *int) {
++    t.Helper()
++    calls := new(int)
++    transport := workflowTransport(func(r *http.Request) (*http.Response, error) {
++        *calls++
++        if r.Method != "GET" || r.URL.Host != "bigquery.googleapis.com" {
++            t.Fatalf("unexpected provider request: %s %s", r.Method, r.URL)
++        }
++        body := response(r, *calls)
++        return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
++    })
++    client, err := bigqueryapi.NewClient(context.Background(), "test-project", option.WithHTTPClient(&http.Client{Transport: transport}))
++    if err != nil { t.Fatal(err) }
++    t.Cleanup(func() { client.Close() })
++    source := &bqsource.Source{Config: bqsource.Config{Project: "test-project"}, Client: client, AllowedDatasets: map[string]struct{}{"test-project.workflow":{}, "other-project.workflow":{}}}
++    return &Tool{Config: Config{Name:"metadata", Source:"s"}}, workflowProvider{source}, calls
++}
++
++func workflowParams(project, dataset string) parameters.ParamValues {
++    return parameters.ParamValues{{Name:"project",Value:project},{Name:"dataset",Value:dataset}, {Name:"table",Value:"people"}}
++}
++
++func TestFlowStewardMetadataScopeBeforeWire(t *testing.T) {
++    tool, provider, calls := workflowFixture(t, func(*http.Request, int) string { t.Fatal("scope escaped"); return "" })
++    for _, params := range []parameters.ParamValues{workflowParams("other-project","workflow"),workflowParams("test-project","forbidden")} {
++        if _, err := tool.Invoke(context.Background(), provider, params, ""); err == nil { t.Fatal("out of scope metadata accepted") }
++    }
++    if *calls != 0 { t.Fatal("out of scope request reached Google") }
++}
++
++
++func workflowTables(count int, next string) string {
++    tables := make([]string, 0, count)
++    for i:=0; i<count; i++ { tables=append(tables, fmt.Sprintf(`{"tableReference":{"projectId":"test-project","datasetId":"workflow","tableId":"t%d"}}`,i)) }
++    return `{"tables":[`+strings.Join(tables,",")+`],"nextPageToken":"`+next+`"}`
++}
++func TestFlowStewardBoundedMetadataWire(t *testing.T) {
++    for _, count := range []int{0, 2, 100, 101} {
++        t.Run(fmt.Sprint(count), func(t *testing.T) {
++            tool, provider, calls := workflowFixture(t, func(r *http.Request, n int) string {
++                if n != 1 { t.Fatal("overflow made an extra page request") }
++                if r.URL.Path != "/bigquery/v2/projects/test-project/datasets/workflow/tables" || r.URL.Query().Get("maxResults") != "101" { t.Fatalf("unbounded catalog request: %s", r.URL) }
++                next := ""
++                if count==101 { next="must-not-follow" }
++                return workflowTables(count,next)
++            })
++            result, err := tool.Invoke(context.Background(),provider,workflowParams("test-project","workflow"),"")
++            if count==101 { if err==nil || result!=nil { t.Fatal("oversized schema silently truncated") } } else {
++                if err!=nil { t.Fatal(err) }
++                if count>0 && len(result.([]any))!=count { t.Fatal("metadata rows lost") }
++            }
++            if *calls!=1 { t.Fatalf("requests=%d",*calls) }
++        })
++    }
++}
++func TestFlowStewardPaginationBound(t *testing.T) {
++    tool,provider,calls:=workflowFixture(t,func(r *http.Request,n int) string {
++        if n>2 { t.Fatal("unexpected extra page") }
++        if n==1 { return workflowTables(100,"next") }
++        if r.URL.Query().Get("pageToken")!="next" { t.Fatal("pagination token missing") }
++        return workflowTables(1,"must-not-follow")
++    })
++    if result,err:=tool.Invoke(context.Background(),provider,workflowParams("test-project","workflow"),""); err==nil || result!=nil { t.Fatal("paginated overflow accepted") }
++    if *calls!=2 {t.Fatalf("requests=%d",*calls)}
++}
++
+--- /dev/null
++++ b/internal/tools/bigquery/bigquerygettableinfo/flowsteward_metadata_test.go
+@@ -0,0 +1,70 @@
++package bigquerygettableinfo
++
++import (
++    "context"
++    "encoding/json"
++    "io"
++    "net/http"
++    "strings"
++    "testing"
++
++    bigqueryapi "cloud.google.com/go/bigquery"
++    "github.com/googleapis/mcp-toolbox/internal/sources"
++    bqsource "github.com/googleapis/mcp-toolbox/internal/sources/bigquery"
++    "github.com/googleapis/mcp-toolbox/internal/util/parameters"
++    "google.golang.org/api/option"
++)
++
++type workflowTransport func(*http.Request) (*http.Response, error)
++func (f workflowTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
++type workflowProvider struct { source *bqsource.Source }
++func (p workflowProvider) GetSource(_ string) (sources.Source, bool) { return p.source, true }
++
++func workflowFixture(t *testing.T, response func(*http.Request, int) string) (*Tool, workflowProvider, *int) {
++    t.Helper()
++    calls := new(int)
++    transport := workflowTransport(func(r *http.Request) (*http.Response, error) {
++        *calls++
++        if r.Method != "GET" || r.URL.Host != "bigquery.googleapis.com" {
++            t.Fatalf("unexpected provider request: %s %s", r.Method, r.URL)
++        }
++        body := response(r, *calls)
++        return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
++    })
++    client, err := bigqueryapi.NewClient(context.Background(), "test-project", option.WithHTTPClient(&http.Client{Transport: transport}))
++    if err != nil { t.Fatal(err) }
++    t.Cleanup(func() { client.Close() })
++    source := &bqsource.Source{Config: bqsource.Config{Project: "test-project"}, Client: client, AllowedDatasets: map[string]struct{}{"test-project.workflow":{}, "other-project.workflow":{}}}
++    return &Tool{Config: Config{Name:"metadata", Source:"s"}}, workflowProvider{source}, calls
++}
++
++func workflowParams(project, dataset string) parameters.ParamValues {
++    return parameters.ParamValues{{Name:"project",Value:project},{Name:"dataset",Value:dataset}, {Name:"table",Value:"people"}}
++}
++
++func TestFlowStewardMetadataScopeBeforeWire(t *testing.T) {
++    tool, provider, calls := workflowFixture(t, func(*http.Request, int) string { t.Fatal("scope escaped"); return "" })
++    for _, params := range []parameters.ParamValues{workflowParams("other-project","workflow"),workflowParams("test-project","forbidden")} {
++        if _, err := tool.Invoke(context.Background(), provider, params, ""); err == nil { t.Fatal("out of scope metadata accepted") }
++    }
++    if *calls != 0 { t.Fatal("out of scope request reached Google") }
++}
++
++
++func TestFlowStewardTableMetadataWireAndJSONShape(t *testing.T) {
++    tool,provider,calls:=workflowFixture(t,func(r *http.Request,n int) string {
++        if r.URL.Path!="/bigquery/v2/projects/test-project/datasets/workflow/tables/people" { t.Fatalf("unexpected metadata path: %s",r.URL) }
++        return `{"tableReference":{"projectId":"test-project","datasetId":"workflow","tableId":"people"},"type":"TABLE","schema":{"fields":[{"name":"name","type":"STRING","mode":"NULLABLE"}]}}`
++    })
++    value,err:=tool.Invoke(context.Background(),provider,workflowParams("test-project","workflow"),"")
++    if err!=nil {t.Fatal(err)}
++    encoded,marshalErr:=json.Marshal(value)
++    if marshalErr!=nil {t.Fatal(marshalErr)}
++    var shape map[string]any
++    if err:=json.Unmarshal(encoded,&shape);err!=nil {t.Fatal(err)}
++    if shape["Type"]!="TABLE" {t.Fatalf("metadata type shape: %s",encoded)}
++    columns:=shape["Schema"].([]any)
++    if len(columns)!=1 || columns[0].(map[string]any)["Name"]!="name" {t.Fatalf("schema shape: %s",encoded)}
++    if *calls!=1 {t.Fatalf("requests=%d",*calls)}
++}
++

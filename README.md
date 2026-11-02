@@ -33,3 +33,41 @@ Write job IDs are deterministic hashes of account, project, connection, effect c
 Offline tests cover host contracts, parameter guards, test-mode suppression, stable job identity, uncertainty and managed auth configuration; upstream BigQuery source, SQL tool and common utility unit suites plus added dry-run policy tests run in the native builder. Real Google Cloud integration is intentionally opt-in and skipped without credentials. No live BigQuery operation has been verified in this release environment; successful compilation and mock contracts do not imply cloud authentication, permission or service availability.
 
 References: [Google parameterized queries](https://cloud.google.com/bigquery/docs/parameterized-queries), [jobs.insert](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert), [jobs.get](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/get). API shapes were checked against those official references and pinned upstream source.
+
+## Datasets and Data Query (1.1.0)
+
+BigQuery is also a read-only SQL dataset connector. Use the same project,
+location, allowed datasets, billing ceiling, timeout and Google credential fields
+as its existing project connection. Saved SQL uses `:named` scalar parameters
+with JSON-schema `string`, `integer`, `number` or `boolean` declarations; values
+are sent separately as native typed BigQuery parameters. Null/array/object
+parameters are currently unsupported. The existing workflow query/write actions
+continue to use their original `@name` typed parameter list.
+
+The saved SQL dialect intentionally accepts one fully qualified backticked native
+table, explicit ordinary column projections (optional `AS` aliases), comparison
+predicates, `AND`/`OR`/`NOT`, `IS NULL`, bounded `IN` lists, `ORDER BY` and positive
+integer `LIMIT`. Column names are ordinary non-keyword identifiers; table aliases,
+functions, casts, joins, subqueries, unions, wildcard projections, comments and
+scripts are refused. Every projected, filtered and sorted column must be allowed
+by the dataset's column scope. Connection project/dataset policy and the native
+read-only dry-run/table checks apply independently.
+
+Dataset operations are `test_connection`, `introspect_schema`, `validate_query`,
+`preview_query`, `execute_template` and `infer_output_schema`. Validation executes
+a bounded preview after local checks. Reads return at most 100 rows and 460 KiB,
+respect smaller row/byte budgets, and share the connection request deadline
+(maximum 30 seconds). Native query billing limits still apply. Empty reads retain
+a matching saved output schema. Schema inference always describes the current
+projection, including aliases; empty results use the selected Dataset snapshot
+for source column types, or expose projected names with unknown types.
+
+Schema refresh uses the official native table-list and table-metadata tools over
+only `allowed_datasets`, with a cumulative deadline and byte budget. It refuses
+catalogs exceeding 100 inspected tables or 1000 columns, and excludes external
+tables and views. When refreshing a selected Dataset, it fetches only that
+Dataset's selected tables and returns only its permitted columns. The native listing asks for at most 101 entries and rejects an
+overflow instead of publishing an incomplete snapshot. Google IAM permissions
+are unchanged; existing credentials must already allow table metadata reads.
+Cloud-free tests exercise the host envelope, MCP subprocess bridge and native
+Google HTTP transport fixtures. They do not establish live Google Cloud access.

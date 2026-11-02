@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_native_provenance():
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())
     assert info["commit"] == "b0010060a939455d91e4f8ba62dc3e72b1892469"
-    assert len(info["packages"]) == 2
+    assert len(info["packages"]) == 4
     assert hashlib.sha256((ROOT / info["patch"]).read_bytes()).hexdigest() == info["patch_sha256"]
     for target, machine in [("linux-amd64", 62), ("linux-arm64", 183)]:
         binary = ROOT / "bin" / target / "toolbox"
@@ -18,6 +18,10 @@ def test_native_provenance():
         assert data[:4] == b"\x7fELF"
         assert int.from_bytes(data[18:20], "little") == machine
         assert hashlib.sha256(data).hexdigest() == info["binaries"][target]["sha256"]
+        assert (
+            info["binaries"][target]["sha256"] + "  bin/" + target + "/toolbox"
+            in (ROOT / "SHA256SUMS").read_text().splitlines()
+        )
 
 
 def test_native_help_without_cloud():

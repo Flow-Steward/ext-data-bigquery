@@ -57,7 +57,7 @@ def managed_config(config, secrets, command, arguments, ip=None):
         "location": config["location"],
         "writeMode": config["write_mode"],
         "allowedDatasets": config["allowed_datasets"],
-        "maxQueryResultRows": 100,
+        "maxQueryResultRows": config.get("max_result_rows", 100),
         "maximumBytesBilled": config["maximum_bytes_billed"],
         "workflowJobID": config.get("job_id", ""),
         "workflowTables": config.get("tables", []),
