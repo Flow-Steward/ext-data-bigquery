@@ -46,3 +46,13 @@ def test_canonical_apache_license():
         hashlib.sha256((ROOT / "LICENSE").read_bytes()).hexdigest()
         == "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
     )
+
+
+def test_executable_dataset_registry_declares_required_dataset_connector_feature():
+    """A real Dataset registry must be discoverable through the public feature gate."""
+    manifest = load("extension.yaml")
+    connectors = manifest["runtime"]["extension_contract_v2"]["dataset_connectors"]
+    assert connectors, "This extension implements an executable Dataset registry"
+    assert "dataset_connector" in manifest["features"], (
+        "Executable dataset_connectors require the public dataset_connector feature"
+    )

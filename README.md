@@ -34,7 +34,7 @@ Offline tests cover host contracts, parameter guards, test-mode suppression, sta
 
 References: [Google parameterized queries](https://cloud.google.com/bigquery/docs/parameterized-queries), [jobs.insert](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert), [jobs.get](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/get). API shapes were checked against those official references and pinned upstream source.
 
-## Datasets and Data Query (1.1.0)
+## Datasets and Data Query (1.1.1)
 
 BigQuery is also a read-only SQL dataset connector. Use the same project,
 location, allowed datasets, billing ceiling, timeout and Google credential fields
