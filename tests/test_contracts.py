@@ -19,9 +19,10 @@ def test_parity():
     ops = load("contracts/operation_manifest.yaml")["operations"]
     acts = load("ui/actions/actions.yaml")["actions"]
     forms = load("contracts/step_ui_manifest.yaml")["forms"]
+    assert {x["operation_id"] for x in ops} == {x["action_id"] for x in acts}
     assert (
         {x["operation_id"] for x in ops if x["workflow_visible"]}
-        == {x["action_id"] for x in acts}
+        == {x["action_id"] for x in acts if x["workflow_visible"]}
         == {x["operation_id"] for x in forms}
         == {"query", "write"}
     )

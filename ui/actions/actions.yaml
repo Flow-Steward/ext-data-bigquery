@@ -109,6 +109,363 @@
         "timeout"
       ],
       "mutates_platform": false
+    },
+    {
+      "action_id": "test_connection",
+      "workflow_visible": false,
+      "title": "Test Connection",
+      "description": "Read-only BigQuery dataset test connection.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.status",
+        "result.connector_id"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
+    },
+    {
+      "action_id": "introspect_schema",
+      "workflow_visible": false,
+      "title": "Introspect Schema",
+      "description": "Read-only BigQuery dataset introspect schema.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.schema_snapshot",
+        "result.resources",
+        "result.resource_count"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
+    },
+    {
+      "action_id": "validate_query",
+      "workflow_visible": false,
+      "title": "Validate Query",
+      "description": "Read-only BigQuery dataset validate query.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.valid",
+        "result.read_only",
+        "result.referenced_resources",
+        "result.rows",
+        "result.row_count",
+        "result.output_schema",
+        "result.truncated"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
+    },
+    {
+      "action_id": "preview_query",
+      "workflow_visible": false,
+      "title": "Preview Query",
+      "description": "Read-only BigQuery dataset preview query.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.rows",
+        "result.row_count",
+        "result.output_schema",
+        "result.truncated"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
+    },
+    {
+      "action_id": "execute_template",
+      "workflow_visible": false,
+      "title": "Execute Template",
+      "description": "Read-only BigQuery dataset execute template.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.rows",
+        "result.row_count",
+        "result.output_schema",
+        "result.truncated"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
+    },
+    {
+      "action_id": "infer_output_schema",
+      "workflow_visible": false,
+      "title": "Infer Output Schema",
+      "description": "Read-only BigQuery dataset infer output schema.",
+      "required_scopes": [
+        "extension:invoke"
+      ],
+      "handler": {
+        "mode": "extension"
+      },
+      "parameters": [
+        {
+          "name": "connection_config",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "secret_refs",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "dataset",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "query_template",
+          "type": "json",
+          "required": true
+        },
+        {
+          "name": "params",
+          "type": "json",
+          "required": false
+        },
+        {
+          "name": "limits",
+          "type": "json",
+          "required": false
+        }
+      ],
+      "result_fields": [
+        "result.output_schema"
+      ],
+      "error_codes": [
+        "invalid_payload",
+        "invalid_connection",
+        "provider_unavailable",
+        "invalid_provider_response",
+        "response_too_large",
+        "timeout",
+        "native_unavailable"
+      ],
+      "mutates_platform": false
     }
   ]
 }

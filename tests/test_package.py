@@ -74,7 +74,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.1-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.2-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
@@ -143,13 +143,44 @@ def test_installer_size_limits_leave_no_partial_archive(source, tmp_path, monkey
 @pytest.mark.parametrize("target", ["linux-amd64", "linux-arm64"])
 def test_actual_release_native_archive_roundtrip(tmp_path, target):
     module = packager()
-    archive_path = module.package_extension(ROOT, target, tmp_path)
+    archive_path = module.package_extension(ROOT, target, tmp_path / "one")
+    second = module.package_extension(ROOT, target, tmp_path / "two")
+    assert archive_path.read_bytes() == second.read_bytes()
     with zipfile.ZipFile(archive_path) as archive:
         prefix = "flowsteward_bigquery/"
         assert (
             hashlib.sha256(archive.read(prefix + "LICENSE")).hexdigest()
             == "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
         )
+        manifest = json.loads(archive.read(prefix + "extension.yaml"))
+        actions = json.loads(archive.read(prefix + "ui/actions/actions.yaml"))["actions"]
+        declared = {action["action_id"]: action for action in actions}
+        host_ids = {
+            "test_connection",
+            "introspect_schema",
+            "validate_query",
+            "preview_query",
+            "execute_template",
+            "infer_output_schema",
+        }
+        assert len(declared) == len(actions)
+        assert host_ids <= declared.keys()
+        assert host_ids.isdisjoint(
+            effect["operation_id"] for effect in manifest["external_effects"]
+        )
+        for action_id in host_ids:
+            action = declared[action_id]
+            assert action["workflow_visible"] is False
+            assert action["mutates_platform"] is False
+            assert action["handler"] == {"mode": "extension"}
+            assert {parameter["name"] for parameter in action["parameters"]} == {
+                "connection_config",
+                "secret_refs",
+                "dataset",
+                "query_template",
+                "params",
+                "limits",
+            }
         metadata = json.loads(archive.read(prefix + ".fs-package.yaml"))
         binary_path = metadata["native_executable"]["path"]
         payload = archive.read(prefix + binary_path)
@@ -195,3 +226,24 @@ def test_output_must_not_overlap_release_payload(source, directory):
     with pytest.raises(ValueError, match="Output directory"):
         module.package_extension(source, "linux-amd64", source / directory)
     assert not list((source / directory).glob("*.zip"))
+
+
+def test_packaged_sql_dataset_query_dispatches_through_actual_core(tmp_path):
+    """Missing host-action declarations must fail before the provider subprocess."""
+    import os
+    import platform
+    import subprocess
+
+    target = {"aarch64": "linux-arm64", "arm64": "linux-arm64", "x86_64": "linux-amd64"}[
+        platform.machine().lower()
+    ]
+    archive = packager().package_extension(ROOT, target, tmp_path)
+    result = subprocess.run(
+        ["/usr/local/bin/python", str(ROOT / "scripts/validate_dataset_dispatch.py"), str(archive)],
+        env={**os.environ, "PYTHONPATH": "/app", "FS_STACK_ENVIRONMENT": "development"},
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

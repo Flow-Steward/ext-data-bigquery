@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "extension_id": "flowsteward.bigquery",
   "kind": "tool_provider",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "release_stage": "active",
   "display_name": "BigQuery",
   "description": "Read BigQuery datasets with scoped saved SQL; preserve parameterized SELECT, INSERT, UPDATE, DELETE and MERGE workflow actions.",
