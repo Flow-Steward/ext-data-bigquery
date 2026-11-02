@@ -3,7 +3,7 @@
     {
       "action_id": "query",
       "workflow_visible": true,
-      "title": "Query rows",
+      "title": "Read rows (SELECT)",
       "description": "Run one bounded SELECT against allowed native tables. Up to 100 rows; truncated results require explicit follow-up.",
       "required_scopes": [
         "extension:invoke"
@@ -58,7 +58,7 @@
     {
       "action_id": "write",
       "workflow_visible": true,
-      "title": "Execute DML",
+      "title": "Write rows (INSERT, UPDATE, DELETE, MERGE)",
       "description": "Run one INSERT, UPDATE, DELETE or MERGE. Durable effect claim required; writes are suppressed in test mode. On uncertain outcome inspect the returned job ID before any manual retry.",
       "required_scopes": [
         "extension:invoke"

@@ -2,7 +2,7 @@
   "operations": [
     {
       "operation_id": "query",
-      "display_name": "Query rows",
+      "display_name": "Read rows (SELECT)",
       "description": "Run one bounded SELECT against allowed native tables. Up to 100 rows; truncated results require explicit follow-up.",
       "operation_kind": "action",
       "workflow_visible": true,
@@ -134,7 +134,7 @@
     },
     {
       "operation_id": "write",
-      "display_name": "Execute DML",
+      "display_name": "Write rows (INSERT, UPDATE, DELETE, MERGE)",
       "description": "Run one INSERT, UPDATE, DELETE or MERGE. Durable effect claim required; writes are suppressed in test mode. On uncertain outcome inspect the returned job ID before any manual retry.",
       "operation_kind": "action",
       "workflow_visible": true,

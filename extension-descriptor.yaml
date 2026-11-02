@@ -5,11 +5,11 @@
     "data_migrations": []
   },
   "extension_id": "flowsteward.bigquery",
-  "release_version": "1.0.0",
+  "release_version": "1.0.1",
   "extension_type": "service_extension",
   "identity": {
     "display_name": "BigQuery",
-    "description": "Bounded GoogleSQL queries and explicit DML writes through pinned Google MCP Toolbox.",
+    "description": "Read BigQuery rows with SELECT and write data with parameterized INSERT, UPDATE, DELETE and MERGE workflow actions.",
     "tags": [
       "bigquery",
       "toolbox"

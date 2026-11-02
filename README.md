@@ -2,8 +2,8 @@
 
 `flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.3.0 (`b0010060a939455d91e4f8ba62dc3e72b1892469`) binary:
 
-- **Query rows**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
-- **Execute DML**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
+- **Read rows (SELECT)**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
+- **Write rows (INSERT, UPDATE, DELETE, MERGE)**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
 
 There are no triggers, DDL, scripts, sessions, load/export jobs, external URL inputs, remote functions, stored routines, views or external tables. Only ordinary native tables in the connection's Google project and explicit dataset allowlist are supported. Physical table targets must use fully qualified backticks: `project.dataset.table`. Google dry-run metadata independently validates the statement type, referenced datasets and ordinary table metadata (including every explicit SQL table identifier independently of provider expansion) before the execution job is submitted. WITH/CTE statements and comma joins are unsupported; use explicit JOIN syntax. Fewer than 50 explicit table references are accepted; native dry-run metadata also fails closed at 50 references. Supported built-in SQL functions are intentionally conservative; see `commands.py`.
 
