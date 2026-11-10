@@ -1,8 +1,8 @@
 Flow Steward BigQuery extension
 Copyright 2026 Flow Steward contributors
 
-This extension packages a modified Google MCP Toolbox for Databases v1.3.0,
-commit b0010060a939455d91e4f8ba62dc3e72b1892469.
+This extension packages a modified Google MCP Toolbox for Databases v1.16.0,
+commit 06ea49d9a487a72c22419b5a8d5c22c11f0d7485.
 Copyright Google LLC; licensed under Apache-2.0 (included in LICENSE).
 Source: https://github.com/googleapis/mcp-toolbox
 

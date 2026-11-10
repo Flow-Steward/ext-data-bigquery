@@ -43,13 +43,13 @@ def test_shipped_binary_dependency_security_floor(target):
 @pytest.mark.parametrize("target", ["linux-amd64", "linux-arm64"])
 def test_shipped_binary_go_security_floor(target):
     version, _, _ = NATIVE.build_info(ROOT / "bin" / target / "toolbox")
-    assert version == "go1.26.10", version
+    assert version == "go1.27.3", version
 
 
 def test_native_dependency_baseline_digest():
     baseline = ROOT / "scripts/patches/0000-security-baseline.patch"
     assert hashlib.sha256(baseline.read_bytes()).hexdigest() == (
-        "a6623600324d2bdec1b30102e749678d4fea326bbb9d9f4f586a7ba472d395e2"
+        "af406af0a861bea0b8e3d83e55fbdef9173cc01762788c6d06cc9b47eaa558e1"
     )
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())
     assert info["security_baseline"]["sha256"] == hashlib.sha256(baseline.read_bytes()).hexdigest()

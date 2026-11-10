@@ -1,0 +1,654 @@
+diff --git a/internal/prebuiltconfigs/tools/alloydb-omni.yaml b/internal/prebuiltconfigs/tools/alloydb-omni.yaml
+index 70dc89732a..acf7402cc8 100644
+--- a/internal/prebuiltconfigs/tools/alloydb-omni.yaml
++++ b/internal/prebuiltconfigs/tools/alloydb-omni.yaml
+@@ -19,7 +19,7 @@ host: ${ALLOYDB_OMNI_HOST:localhost}
+ port: ${ALLOYDB_OMNI_PORT:5432}
+ database: ${ALLOYDB_OMNI_DATABASE}
+ user: ${ALLOYDB_OMNI_USER}
+-password: ${ALLOYDB_OMNI_PASSWORD}
++password: ${ALLOYDB_OMNI_PASSWORD:}
+ queryParams: ${ALLOYDB_OMNI_QUERY_PARAMS:}
+ ---
+ kind: tool
+@@ -188,7 +188,7 @@ kind: tool
+ name: get_query_plan
+ type: postgres-sql
+ source: alloydb-omni-source
+-description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options).
++description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options). Use in production safely for plan inspection, regression checks, and query tuning workflows.
+ statement: |
+   EXPLAIN (FORMAT JSON) {{.query}};
+ templateParameters:
+@@ -272,9 +272,8 @@ name: list_stored_procedure
+ type: postgres-list-stored-procedure
+ source: alloydb-omni-source
+ ---
+-kind: group
++kind: toolset
+ name: data
+-description: Use these skills when you need to explore the database structure, identify schema objects like views and triggers, and execute SQL queries to interact with your data.
+ tools:
+ - execute_sql
+ - list_tables
+@@ -285,9 +284,8 @@ tools:
+ - list_sequences
+ - list_stored_procedure
+ ---
+-kind: group
++kind: toolset
+ name: performance
+-description: Use these skills when you need to analyze query performance, generate execution plans, check table/column statistics, and monitor overall database activity.
+ tools:
+ - execute_sql
+ - get_query_plan
+@@ -297,9 +295,8 @@ tools:
+ - list_database_stats
+ - list_active_queries
+ ---
+-kind: group
++kind: toolset
+ name: monitor
+-description: Use these skills when you need to troubleshoot production issues by identifying locks, tracking long-running transactions, and getting a high-level view of server state.
+ tools:
+ - database_overview
+ - list_active_queries
+@@ -308,9 +305,8 @@ tools:
+ - list_database_stats
+ - list_pg_settings
+ ---
+-kind: group
++kind: toolset
+ name: optimize
+-description: Use these skills when you need to fine-tune the database engine settings, manage extensions, or optimize the columnar engine for better analytical performance.
+ tools:
+ - list_pg_settings
+ - list_memory_configurations
+@@ -320,9 +316,8 @@ tools:
+ - list_columnar_configurations
+ - list_columnar_recommended_columns
+ ---
+-kind: group
++kind: toolset
+ name: health
+-description: Use these skills when you need to audit database health, identify storage bloat, find broken indexes, and verify tablespace or maintenance configurations.
+ tools:
+ - list_top_bloated_tables
+ - list_invalid_indexes
+@@ -331,18 +326,16 @@ tools:
+ - database_overview
+ - list_autovacuum_configurations
+ ---
+-kind: group
++kind: toolset
+ name: replication
+-description: Use these skills when you need to monitor the health of database replication, manage sync states between nodes, and audit publication tables for distributed setups.
+ tools:
+ - replication_stats
+ - list_replication_slots
+ - list_publication_tables
+ - database_overview
+ ---
+-kind: group
++kind: toolset
+ name: access-control
+-description: Use these skills when you need to manage user roles, inspect permissions, and verify security-related configuration parameters.
+ tools:
+ - list_roles
+ - list_pg_settings
+diff --git a/internal/prebuiltconfigs/tools/alloydb-postgres.yaml b/internal/prebuiltconfigs/tools/alloydb-postgres.yaml
+index a95f39c4ae..73d3ec1804 100644
+--- a/internal/prebuiltconfigs/tools/alloydb-postgres.yaml
++++ b/internal/prebuiltconfigs/tools/alloydb-postgres.yaml
+@@ -23,7 +23,6 @@ database: ${ALLOYDB_POSTGRES_DATABASE}
+ user: ${ALLOYDB_POSTGRES_USER:}
+ password: ${ALLOYDB_POSTGRES_PASSWORD:}
+ ipType: ${ALLOYDB_POSTGRES_IP_TYPE:public}
+-readOnly: ${ALLOYDB_POSTGRES_READONLY:false}
+ ---
+ kind: source
+ name: cloud-monitoring-source
+@@ -33,7 +32,6 @@ kind: source
+ name: alloydb-admin-source
+ type: alloydb-admin
+ defaultProject: ${ALLOYDB_POSTGRES_PROJECT:}
+-readOnly: ${ALLOYDB_POSTGRES_READONLY:false}
+ ---
+ kind: tool
+ name: execute_sql
+@@ -423,9 +421,8 @@ name: list_instances
+ type: alloydb-list-instances
+ source: alloydb-admin-source
+ ---
+-kind: group
++kind: toolset
+ name: admin
+-description: Use these skills when you need to provision new AlloyDB clusters and instances, monitor their creation status, and retrieve high-level configuration or health data for the environment.
+ tools:
+ - create_cluster
+ - get_cluster
+@@ -436,9 +433,8 @@ tools:
+ - database_overview
+ - wait_for_operation
+ ---
+-kind: group
++kind: toolset
+ name: access-management
+-description: Use these skills when you need to manage database users, inspect permissions and roles, and verify global configuration parameters related to security and access control.
+ tools:
+ - create_user
+ - list_users
+@@ -447,9 +443,8 @@ tools:
+ - list_pg_settings
+ - database_overview
+ ---
+-kind: group
++kind: toolset
+ name: data
+-description: Use these skills when you need to explore the database schema, identify objects like views and triggers, and execute custom SQL queries to interact with your data.
+ tools:
+ - execute_sql
+ - list_tables
+@@ -460,9 +455,8 @@ tools:
+ - list_sequences
+ - list_stored_procedure
+ ---
+-kind: group
++kind: toolset
+ name: monitor
+-description: Use these skills when you need to troubleshoot slow performance, analyze query execution plans, identify resource-heavy processes, and monitor system-level PromQL metrics.
+ tools:
+ - list_active_queries
+ - list_query_stats
+@@ -473,9 +467,8 @@ tools:
+ - list_locks
+ - list_database_stats
+ ---
+-kind: group
++kind: toolset
+ name: health
+-description: Use these skills when you need to optimize storage, identify index issues, analyze table statistics, or manage autovacuum and tablespace configurations to maintain peak database health.
+ tools:
+ - list_top_bloated_tables
+ - list_invalid_indexes
+@@ -486,9 +479,8 @@ tools:
+ - database_overview
+ - get_instance
+ ---
+-kind: group
++kind: toolset
+ name: optimize
+-description: Use these skills when you need to discover and manage PostgreSQL extensions or fine-tune engine-level settings such as memory allocation and server configuration parameters.
+ tools:
+ - list_available_extensions
+ - list_installed_extensions
+@@ -497,9 +489,8 @@ tools:
+ - database_overview
+ - get_cluster
+ ---
+-kind: group
++kind: toolset
+ name: replication
+-description: Use these skills when you need to monitor replication health, manage sync states between nodes, and ensure the high availability and data distribution of your AlloyDB cluster.
+ tools:
+ - replication_stats
+ - list_replication_slots
+diff --git a/internal/prebuiltconfigs/tools/cloud-sql-mssql.yaml b/internal/prebuiltconfigs/tools/cloud-sql-mssql.yaml
+index 7f2c2cd24f..33d1f4577f 100644
+--- a/internal/prebuiltconfigs/tools/cloud-sql-mssql.yaml
++++ b/internal/prebuiltconfigs/tools/cloud-sql-mssql.yaml
+@@ -152,9 +152,8 @@ type: cloud-sql-wait-for-operation
+ source: cloud-sql-admin-source
+ multiplier: 4
+ ---
+-kind: group
++kind: toolset
+ name: admin
+-description: Use these skills when you need to provision new Cloud SQL for SQL Server instances, create databases and users, and monitor the progress of long-running operations.
+ tools:
+ - create_instance
+ - get_instance
+@@ -164,22 +163,19 @@ tools:
+ - create_user
+ - wait_for_operation
+ ---
+-kind: group
++kind: toolset
+ name: data
+-description: Use these skills when you need to explore the database schema and execute SQL queries to interact with your data.
+ tools:
+ - execute_sql
+ - list_tables
+ ---
+-kind: group
++kind: toolset
+ name: monitor
+-description: Use these skills when you need to troubleshoot slow queries and analyze system-level PromQL metrics.
+ tools:
+ - get_system_metrics
+ ---
+-kind: group
++kind: toolset
+ name: lifecycle
+-description: Use these skills when you need to manage the lifecycle and durability of your data, including creating backups, restoring from existing backups, and cloning instances for testing or migration.
+ tools:
+ - create_backup
+ - restore_backup
+diff --git a/internal/prebuiltconfigs/tools/cloud-sql-mysql.yaml b/internal/prebuiltconfigs/tools/cloud-sql-mysql.yaml
+index 3d63236af6..6193f478fc 100644
+--- a/internal/prebuiltconfigs/tools/cloud-sql-mysql.yaml
++++ b/internal/prebuiltconfigs/tools/cloud-sql-mysql.yaml
+@@ -22,13 +22,11 @@ database: ${CLOUD_SQL_MYSQL_DATABASE}
+ user: ${CLOUD_SQL_MYSQL_USER:}
+ password: ${CLOUD_SQL_MYSQL_PASSWORD:}
+ ipType: ${CLOUD_SQL_MYSQL_IP_TYPE:PUBLIC}
+-readOnly: ${CLOUD_SQL_MYSQL_READONLY:false}
+ ---
+ kind: source
+ name: cloud-sql-admin-source
+ type: cloud-sql-admin
+ defaultProject: ${CLOUD_SQL_MYSQL_PROJECT:}
+-readOnly: ${CLOUD_SQL_MYSQL_READONLY:false}
+ ---
+ kind: source
+ name: cloud-monitoring-source
+@@ -50,7 +48,7 @@ kind: tool
+ name: get_query_plan
+ type: mysql-get-query-plan
+ source: cloud-sql-mysql-source
+-description: "Provide information about how MySQL executes a SQL statement. Common use cases include: 1) analyze query plan to improve its performance, and 2) determine effectiveness of existing indexes and evaluate new ones. Pass a single SQL statement in sql_statement; the tool returns its execution plan without running it."
++description: "Provide information about how MySQL executes a SQL statement. Common use cases include: 1) analyze query plan to improve its performance, and 2) determine effectiveness of existing indexes and evalueate new ones."
+ ---
+ kind: tool
+ name: list_tables
+@@ -77,18 +75,6 @@ source: cloud-sql-mysql-source
+ description: List table fragmentation in MySQL, by calculating the size of the data and index files and free space allocated to each table. The query calculates fragmentation percentage which represents the proportion of free space relative to the total data and index size. Storage can be reclaimed for tables with high fragmentation using OPTIMIZE TABLE.
+ ---
+ kind: tool
+-name: list_all_locks
+-type: mysql-list-all-locks
+-source: cloud-sql-mysql-source
+-description: Lists top N (default 10) locks on the specified database ordered by query execution time in descending order.
+----
+-kind: tool
+-name: show_query_stats
+-type: mysql-show-query-stats
+-source: cloud-sql-mysql-source
+-description: Displays query execution statistics including execution count, total and average latency, max latency, total rows examined, full table scans, and inefficient index usage.
+----
+-kind: tool
+ name: create_backup
+ type: cloud-sql-create-backup
+ source: cloud-sql-admin-source
+@@ -231,9 +217,8 @@ name: list_databases
+ type: cloud-sql-list-databases
+ source: cloud-sql-admin-source
+ ---
+-kind: group
++kind: toolset
+ name: admin
+-description: Use these skills when you need to provision new Cloud SQL for MySQL instances, create databases and users, and monitor the progress of infrastructure operations.
+ tools:
+ - create_instance
+ - get_instance
+@@ -243,32 +228,27 @@ tools:
+ - create_user
+ - wait_for_operation
+ ---
+-kind: group
++kind: toolset
+ name: data
+-description: Use these skills when you need to explore your database schema, execute SQL queries to interact with your data, and inspect how MySQL plans to execute your statements.
+ tools:
+ - execute_sql
+ - list_tables
+ - get_query_plan
+ - list_active_queries
+ ---
+-kind: group
++kind: toolset
+ name: monitor
+-description: Use these skills when you need to troubleshoot slow queries, analyze system-level PromQL metrics, and identify structural performance issues like table fragmentation or missing unique indexes.
+ tools:
+ - get_query_plan
+ - list_active_queries
+-- list_all_locks
+ - get_query_metrics
+ - get_system_metrics
+ - list_table_fragmentation
+ - list_table_stats
+ - list_tables_missing_unique_indexes
+-- show_query_stats
+ ---
+-kind: group
++kind: toolset
+ name: lifecycle
+-description: Use these skills when you need to manage the durability and safety of your data by creating backups, restoring from previous states, or cloning instances for recovery and testing.
+ tools:
+ - create_backup
+ - restore_backup
+diff --git a/internal/prebuiltconfigs/tools/cloud-sql-postgres.yaml b/internal/prebuiltconfigs/tools/cloud-sql-postgres.yaml
+index 38f37d8e34..c9858f0e6d 100644
+--- a/internal/prebuiltconfigs/tools/cloud-sql-postgres.yaml
++++ b/internal/prebuiltconfigs/tools/cloud-sql-postgres.yaml
+@@ -22,13 +22,11 @@ database: ${CLOUD_SQL_POSTGRES_DATABASE}
+ user: ${CLOUD_SQL_POSTGRES_USER:}
+ password: ${CLOUD_SQL_POSTGRES_PASSWORD:}
+ ipType: ${CLOUD_SQL_POSTGRES_IP_TYPE:public}
+-readOnly: ${CLOUD_SQL_POSTGRES_READONLY:false}
+ ---
+ kind: source
+ name: cloud-sql-admin-source
+ type: cloud-sql-admin
+ defaultProject: ${CLOUD_SQL_POSTGRES_PROJECT:}
+-readOnly: ${CLOUD_SQL_POSTGRES_READONLY:false}
+ ---
+ kind: source
+ name: cloud-monitoring-source
+@@ -38,7 +36,7 @@ kind: tool
+ name: execute_sql
+ type: postgres-execute-sql
+ source: cloudsql-pg-source
+-description: Executes a single PostgreSQL statement and returns result rows as JSON. Use dedicated schema tools (list_tables, list_schemas, list_views, list_indexes) for inspecting database objects. Only use this tool for custom data queries not covered by those tools.
++description: Use this tool to execute a single SQL statement.
+ ---
+ kind: tool
+ name: list_tables
+@@ -185,7 +183,7 @@ kind: tool
+ name: get_query_plan
+ type: postgres-sql
+ source: cloudsql-pg-source
+-description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options). Do not use this tool in production as it is prone to SQL injection risks.
++description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options). Use in production safely for plan inspection, regression checks, and query tuning workflows.
+ statement: |
+   EXPLAIN (FORMAT JSON) {{.query}};
+ templateParameters:
+@@ -439,29 +437,8 @@ name: generate_query
+ type: vector-assist-generate-query
+ source: cloudsql-pg-source
+ ---
+-kind: tool
+-name: delete_spec
+-type: vector-assist-delete-spec
+-source: cloudsql-pg-source
+----
+-kind: tool
+-name: list_specs
+-type: vector-assist-list-specs
+-source: cloudsql-pg-source
+----
+-kind: tool
+-name: get_spec
+-type: vector-assist-get-spec
+-source: cloudsql-pg-source
+----
+-kind: tool
+-name: improve_query_recall
+-type: vector-assist-improve-query-recall
+-source: cloudsql-pg-source
+----
+-kind: group
++kind: toolset
+ name: admin
+-description: Use these skills when you need to provision new Cloud SQL instances, create databases and users, clone existing environments, and monitor the progress of long-running operations.
+ tools:
+ - create_instance
+ - get_instance
+@@ -472,9 +449,8 @@ tools:
+ - wait_for_operation
+ - clone_instance
+ ---
+-kind: group
++kind: toolset
+ name: lifecycle
+-description: Use these skills when you need to manage the lifecycle of your instances, including performing backups and restores, checking major version upgrade compatibility, and monitoring overall instance status.
+ tools:
+ - create_backup
+ - restore_backup
+@@ -484,9 +460,8 @@ tools:
+ - get_instance
+ - list_instances
+ ---
+-kind: group
++kind: toolset
+ name: data
+-description: Use these skills when you need to explore the database structure, discover schema objects like views or stored procedures, and execute custom SQL queries to interact with your data.
+ tools:
+ - execute_sql
+ - list_tables
+@@ -497,9 +472,8 @@ tools:
+ - list_sequences
+ - list_stored_procedure
+ ---
+-kind: group
++kind: toolset
+ name: monitor
+-description: Use these skills when you need to troubleshoot performance bottlenecks, analyze query execution plans, identify resource-heavy processes, and monitor system-level PromQL metrics.
+ tools:
+ - get_system_metrics
+ - get_query_metrics
+@@ -510,9 +484,8 @@ tools:
+ - long_running_transactions
+ - list_locks
+ ---
+-kind: group
++kind: toolset
+ name: health
+-description: Use these skills when you need to audit database health, identify storage bloat, find invalid indexes, analyze table statistics, and manage maintenance configurations like autovacuum.
+ tools:
+ - list_top_bloated_tables
+ - list_invalid_indexes
+@@ -523,9 +496,8 @@ tools:
+ - database_overview
+ - list_pg_settings
+ ---
+-kind: group
++kind: toolset
+ name: view-config
+-description: Use these skills when you need to discover and manage PostgreSQL extensions or fine-tune engine-level settings such as memory allocation and server configuration parameters.
+ tools:
+ - list_available_extensions
+ - list_installed_extensions
+@@ -534,9 +506,8 @@ tools:
+ - database_overview
+ - get_instance
+ ---
+-kind: group
++kind: toolset
+ name: replication
+-description: Use these skills when you need to monitor replication health, manage sync states between nodes, and audit database roles and security settings to ensure environment integrity.
+ tools:
+ - replication_stats
+ - list_replication_slots
+@@ -545,16 +516,11 @@ tools:
+ - list_pg_settings
+ - database_overview
+ ---
+-kind: group
++kind: toolset
+ name: vectorassist
+-description: Use these skills to set up and optimize production-ready vector workloads by simply expressing your intent and performance requirements.
+ tools:
+ - execute_sql
+ - define_spec
+ - modify_spec
+ - apply_spec
+ - generate_query
+-- improve_query_recall
+-- list_specs
+-- get_spec
+-- delete_spec
+\ No newline at end of file
+diff --git a/internal/prebuiltconfigs/tools/mssql.yaml b/internal/prebuiltconfigs/tools/mssql.yaml
+index f14e084baf..2ca9c44ec1 100644
+--- a/internal/prebuiltconfigs/tools/mssql.yaml
++++ b/internal/prebuiltconfigs/tools/mssql.yaml
+@@ -33,16 +33,8 @@ type: mssql-list-tables
+ source: mssql-source
+ description: Lists detailed schema information (object type, columns, constraints, indexes, triggers, comment) as JSON for user-created tables (ordinary or partitioned). Filters by a comma-separated list of names. If names are omitted, lists all tables in user schemas.
+ ---
+-kind: tool
+-name: get_database_object_source_code
+-type: mssql-get-database-object-source-code
+-source: mssql-source
+-description: Executes a query to retrieve source code for all coding objects.
+----
+ kind: toolset
+ name: data
+ tools:
+ - execute_sql
+ - list_tables
+-- get_database_object_source_code
+-
+diff --git a/internal/prebuiltconfigs/tools/mysql.yaml b/internal/prebuiltconfigs/tools/mysql.yaml
+index e8d4c67d49..9741e5d080 100644
+--- a/internal/prebuiltconfigs/tools/mysql.yaml
++++ b/internal/prebuiltconfigs/tools/mysql.yaml
+@@ -39,7 +39,7 @@ kind: tool
+ name: get_query_plan
+ type: mysql-get-query-plan
+ source: mysql-source
+-description: "Provide information about how MySQL executes a SQL statement. Common use cases include: 1) analyze query plan to improve its performance, and 2) determine effectiveness of existing indexes and evaluate new ones. Pass a single SQL statement in sql_statement; the tool returns its execution plan without running it."
++description: "Provide information about how MySQL executes a SQL statement. Common use cases include: 1) analyze query plan to improve its performance, and 2) determine effectiveness of existing indexes and evalueate new ones."
+ ---
+ kind: tool
+ name: list_tables
+@@ -65,18 +65,6 @@ type: mysql-list-table-fragmentation
+ source: mysql-source
+ description: List table fragmentation in MySQL, by calculating the size of the data and index files and free space allocated to each table. The query calculates fragmentation percentage which represents the proportion of free space relative to the total data and index size. Storage can be reclaimed for tables with high fragmentation using OPTIMIZE TABLE.
+ ---
+-kind: tool
+-name: list_all_locks
+-type: mysql-list-all-locks
+-source: mysql-source
+-description: Lists top N (default 10) locks on the specified database ordered by query execution time in descending order.
+----
+-kind: tool
+-name: show_query_stats
+-type: mysql-show-query-stats
+-source: mysql-source
+-description: Displays query execution statistics including execution count, total and average latency, max latency, total rows examined, full table scans, and inefficient index usage.
+----
+ kind: toolset
+ name: data
+ tools:
+@@ -90,8 +78,6 @@ name: monitor
+ tools:
+ - get_query_plan
+ - list_active_queries
+-- list_all_locks
+ - list_table_fragmentation
+ - list_table_stats
+ - list_tables_missing_unique_indexes
+-- show_query_stats
+\ No newline at end of file
+diff --git a/internal/prebuiltconfigs/tools/postgres.yaml b/internal/prebuiltconfigs/tools/postgres.yaml
+index d5c09f36ef..939a4d04c6 100644
+--- a/internal/prebuiltconfigs/tools/postgres.yaml
++++ b/internal/prebuiltconfigs/tools/postgres.yaml
+@@ -173,7 +173,7 @@ kind: tool
+ name: get_query_plan
+ type: postgres-sql
+ source: postgresql-source
+-description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options). Do not use this tool in production as it is prone to SQL injection risks.
++description: Generate a PostgreSQL EXPLAIN plan in JSON format for a single SQL statement—without executing it. This returns the optimizer's estimated plan, costs, and rows (no ANALYZE, no extra options). Use in production safely for plan inspection, regression checks, and query tuning workflows.
+ statement: |
+   EXPLAIN (FORMAT JSON) {{.query}};
+ templateParameters:
+diff --git a/internal/prebuiltconfigs/tools/spanner-postgres.yaml b/internal/prebuiltconfigs/tools/spanner-postgres.yaml
+index 267e6f7291..81e553b0b6 100644
+--- a/internal/prebuiltconfigs/tools/spanner-postgres.yaml
++++ b/internal/prebuiltconfigs/tools/spanner-postgres.yaml
+@@ -24,13 +24,13 @@ kind: tool
+ name: execute_sql
+ type: spanner-execute-sql
+ source: spanner-source
+-description: Execute read-write SQL statements that modify the database (DML), such as INSERT, UPDATE, DELETE, or table alterations. Do not use this tool for standard data queries or SELECT statements. Please use the PostgreSQL interface for Spanner.
++description: Use this tool to execute DML SQL. Please use the PostgreSQL interface for Spanner.
+ ---
+ kind: tool
+-name: execute_sql_readonly
++name: execute_sql_dql
+ type: spanner-execute-sql
+ source: spanner-source
+-description: Execute read-only SQL queries (DQL) such as SELECT statements, metadata inspections, or information_schema queries. Use this tool as the default for any data retrieval tasks. Use the PostgreSQL interface for Spanner.
++description: Use this tool to execute DQL SQL. Please use the PostgreSQL interface for Spanner.
+ readOnly: true
+ ---
+ kind: tool
+@@ -230,23 +230,9 @@ parameters:
+   description: "Optional: Use 'simple' to return table names only or use 'detailed' to return the full information schema."
+   default: detailed
+ ---
+-kind: tool
+-name: search_catalog
+-type: spanner-search-catalog
+-source: spanner-source
+-description: Searches for data assets (eg. Spanner instances, tables, views, or databases) in catalog based on the provided search query
+----
+ kind: toolset
+ name: data
+ tools:
+ - execute_sql
+-- execute_sql_readonly
+-- list_tables
+----
+-kind: toolset
+-name: data_with_discovery
+-tools:
+-- execute_sql
+-- execute_sql_readonly
++- execute_sql_dql
+ - list_tables
+-- search_catalog
+diff --git a/internal/prebuiltconfigs/tools/spanner.yaml b/internal/prebuiltconfigs/tools/spanner.yaml
+index 62067b07db..9217e61261 100644
+--- a/internal/prebuiltconfigs/tools/spanner.yaml
++++ b/internal/prebuiltconfigs/tools/spanner.yaml
+@@ -24,13 +24,13 @@ kind: tool
+ name: execute_sql
+ type: spanner-execute-sql
+ source: spanner-source
+-description: Execute read-write SQL statements that modify the database (DML), such as INSERT, UPDATE, DELETE, or table alterations. Do not use this tool for standard data queries or SELECT statements. Please use the ${SPANNER_DIALECT:googlesql} interface for Spanner.
++description: Use this tool to execute DML SQL. Please use the ${SPANNER_DIALECT:googlesql} interface for Spanner.
+ ---
+ kind: tool
+-name: execute_sql_readonly
++name: execute_sql_dql
+ type: spanner-execute-sql
+ source: spanner-source
+-description: Execute read-only SQL queries (DQL) such as SELECT statements, metadata inspections, or information_schema queries. Use this tool as the default for any data retrieval tasks. Please use the ${SPANNER_DIALECT:googlesql} interface for Spanner.
++description: Use this tool to execute DQL SQL. Please use the ${SPANNER_DIALECT:googlesql} interface for Spanner.
+ readOnly: true
+ ---
+ kind: tool
+@@ -45,27 +45,10 @@ type: spanner-list-graphs
+ source: spanner-source
+ description: Lists detailed graph schema information (node tables, edge tables, labels and property declarations) as JSON for user-created graphs. Filters by a comma-separated list of graph names. If names are omitted, lists all graphs. The output can be 'simple' (graph names only) or 'detailed' (full schema).
+ ---
+-kind: tool
+-name: search_catalog
+-type: spanner-search-catalog
+-source: spanner-source
+-description: Searches for data assets (eg. Spanner instances, tables, views, or databases) in catalog based on the provided search query
+----
+-kind: group
+-name: data
+-description: Use these skills when you need to explore the database structure, discover schema objects like tables and graphs, and execute custom SQL queries to interact with your data.
+-tools:
+-- execute_sql
+-- execute_sql_readonly
+-- list_tables
+-- list_graphs
+----
+ kind: toolset
+-name: data_with_discovery
++name: data
+ tools:
+ - execute_sql
+-- execute_sql_readonly
++- execute_sql_dql
+ - list_tables
+ - list_graphs
+-- search_catalog
+-

@@ -1,6 +1,6 @@
 # BigQuery workflow extension
 
-`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.3.0 (`b0010060a939455d91e4f8ba62dc3e72b1892469`) binary:
+`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.16.0 (`06ea49d9a487a72c22419b5a8d5c22c11f0d7485`) binary:
 
 - **Read rows (SELECT)**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
 - **Write rows (INSERT, UPDATE, DELETE, MERGE)**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
@@ -28,7 +28,7 @@ Write job IDs are deterministic hashes of account, project, connection, effect c
 
 ## Build and verification
 
-`./scripts/build_toolbox.sh` uses a digest-pinned Go 1.26.10 Docker image with 1 CPU/2 GiB. It builds only the BigQuery source and SQL tool imports for Linux AMD64 and ARM64, retaining upstream Apache licensing and patch provenance. The builder uses shared batch caches owned and cleaned by the batch coordinator. Each release ZIP contains exactly one target ELF, its checksum/provenance, Python source, public contracts, tests and the reproducible patch. Build with `TOOLBOX_SOURCE` pointing to an unmodified local checkout at the pinned commit. Package each target with `python3 scripts/package_extension.py --runtime-target linux-amd64` (or linux-arm64).
+`./scripts/build_toolbox.sh` uses a digest-pinned Go 1.27.3 Docker image with 1 CPU/2 GiB. It builds only the BigQuery source and SQL tool imports for Linux AMD64 and ARM64, retaining upstream Apache licensing and patch provenance. The builder uses shared batch caches owned and cleaned by the batch coordinator. Each release ZIP contains exactly one target ELF, its checksum/provenance, Python source, public contracts, tests and the reproducible patch. Build with `TOOLBOX_SOURCE` pointing to an unmodified local checkout at the pinned commit. Package each target with `python3 scripts/package_extension.py --runtime-target linux-amd64` (or linux-arm64).
 
 Offline tests cover host contracts, parameter guards, test-mode suppression, stable job identity, uncertainty and managed auth configuration; upstream BigQuery source, SQL tool and common utility unit suites plus added dry-run policy tests run in the native builder. Real Google Cloud integration is intentionally opt-in and skipped without credentials. No live BigQuery operation has been verified in this release environment; successful compilation and mock contracts do not imply cloud authentication, permission or service availability.
 

@@ -231,6 +231,7 @@ def invoke(config, secrets, command, arguments, *, timeout_seconds):
                     str(path),
                     "--stdio",
                     "--disable-reload",
+                    "--disable-version-check",
                     "--log-level",
                     "ERROR",
                 ],

@@ -74,6 +74,8 @@ def source(tmp_path):
     patch = Path("scripts/patches/0000-security-baseline.patch")
     (root / patch).parent.mkdir(parents=True)
     shutil.copyfile(ROOT / patch, root / patch)
+    approved = Path("scripts/patches/0000-approved-prebuilt-profiles.patch")
+    shutil.copyfile(ROOT / approved, root / approved)
     for name in ("native_build_info.py", "package_extension.py", "security-floor.json"):
         shutil.copyfile(ROOT / "scripts" / name, root / "scripts" / name)
     return root
@@ -102,7 +104,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.3-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.4-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
