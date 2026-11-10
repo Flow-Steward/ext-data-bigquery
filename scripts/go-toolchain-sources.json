@@ -1,0 +1,16 @@
+{
+  "version": "go1.27.4",
+  "bootstrap_image": "golang:1.27.3-bookworm@sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0",
+  "archives": {
+    "amd64": {
+      "url": "https://go.dev/dl/go1.27.4.linux-amd64.tar.gz",
+      "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840",
+      "size": 70680823
+    },
+    "arm64": {
+      "url": "https://go.dev/dl/go1.27.4.linux-arm64.tar.gz",
+      "sha256": "3392582988a273a87ab5043ee1b2c9c17a2c3c00580bf9326c47a2e0aaaeac92",
+      "size": 67129258
+    }
+  }
+}

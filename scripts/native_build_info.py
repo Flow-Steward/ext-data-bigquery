@@ -68,7 +68,7 @@ def record(root: Path) -> None:
 def check_security_floor(version: str, modules: dict[str, str], raw: str) -> None:
     """Accept only the reviewed compiler and effective selected dependency versions."""
     import re
-    if version != "go1.27.3":
+    if version != "go1.27.4":
         raise ValueError(f"native compiler is outside the reviewed security baseline: {version}")
     floors = json.loads((Path(__file__).resolve().parent / "security-floor.json").read_text())["modules"]
     previous = None
@@ -107,6 +107,25 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     profile_digest = "df264c60006ad1a01812b427fb6a9593115ddd86227fc9522b8bae6731616aca"
     if profile != {"patch": "scripts/patches/0000-approved-prebuilt-profiles.patch", "sha256": profile_digest} or not profile_path.is_file() or profile_path.is_symlink() or hashlib.sha256(profile_path.read_bytes()).hexdigest() != profile_digest:
         raise ValueError("native approved profile baseline is missing or changed")
+    if provenance.get("go_image_role") != "bootstrap":
+        raise ValueError("native container image role must be bootstrap")
+    install = provenance.get("go_toolchain_install", {})
+    helper_path = root / "scripts/install-go-toolchain.sh"
+    sources_path = root / "scripts/go-toolchain-sources.json"
+    selected_path = root / "scripts/go-toolchain-selected.json"
+    helper_sha = "a12d9761e28980bf808a29e2898dcb9511391c1b70c06014ad49cbadfc8733c6"
+    sources_sha = "5008b838d6855cb0d67f3100ce18a4335be04ad3b36012fcc95036e998da997e"
+    if install.get("helper_path") != "scripts/install-go-toolchain.sh" or install.get("helper_sha256") != helper_sha or not helper_path.is_file() or helper_path.is_symlink() or hashlib.sha256(helper_path.read_bytes()).hexdigest() != helper_sha:
+        raise ValueError("native compiler installer is missing or changed")
+    if not sources_path.is_file() or sources_path.is_symlink() or hashlib.sha256(sources_path.read_bytes()).hexdigest() != sources_sha:
+        raise ValueError("native compiler sources are missing or changed")
+    sources = json.loads(sources_path.read_text())
+    selected = install.get("selected_sdk", {})
+    archive = sources.get("archives", {}).get(selected.get("host_arch"), {})
+    if install.get("sources") != sources or selected.get("version") != "go1.27.4" or sources.get("version") != "go1.27.4" or not archive or selected.get("url") != archive.get("url") or selected.get("sha256") != archive.get("sha256") or set(selected) != {"version", "host_arch", "url", "sha256"}:
+        raise ValueError("native selected compiler SDK does not match official sources")
+    if not selected_path.is_file() or selected_path.is_symlink() or json.loads(selected_path.read_text()) != selected:
+        raise ValueError("native selected compiler metadata is missing or changed")
     baseline = provenance.get("security_baseline", {})
     digest = "958ad7a46b015c6520d1c60037c4e6fab41e756d417a618c612f08ac8806dfe7"
     if baseline != {"patch": "scripts/patches/0000-security-baseline.patch", "sha256": digest}:

@@ -1,5 +1,5 @@
 {
-  "go_version": "go1.27.3",
+  "go_version": "go1.27.4",
   "modules": {
     "cel.dev/expr": "v0.26.0",
     "cloud.google.com/go/alloydb": "v1.33.1",

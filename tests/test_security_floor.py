@@ -43,7 +43,7 @@ def test_shipped_binary_dependency_security_floor(target):
 @pytest.mark.parametrize("target", ["linux-amd64", "linux-arm64"])
 def test_shipped_binary_go_security_floor(target):
     version, _, _ = NATIVE.build_info(ROOT / "bin" / target / "toolbox")
-    assert version == "go1.27.3", version
+    assert version == "go1.27.4", version
 
 
 def test_native_dependency_baseline_digest():
@@ -55,7 +55,7 @@ def test_native_dependency_baseline_digest():
     assert info["security_baseline"]["sha256"] == hashlib.sha256(baseline.read_bytes()).hexdigest()
 
 
-@pytest.mark.parametrize("version", ["go1.26.2", "go1.27.0", "go1.27.1"])
+@pytest.mark.parametrize("version", ["go1.26.2", "go1.27.0", "go1.27.1", "go1.27.3"])
 def test_security_floor_rejects_unreviewed_compiler(version):
     with pytest.raises(ValueError, match="compiler"):
         NATIVE.check_security_floor(version, {"golang.org/x/net": "v0.62.0"}, "")

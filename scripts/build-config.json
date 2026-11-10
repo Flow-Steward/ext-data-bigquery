@@ -12,5 +12,6 @@
     "github.com/googleapis/mcp-toolbox/internal/tools/bigquery/bigquerysql",
     "github.com/googleapis/mcp-toolbox/internal/tools/bigquery/bigquerylisttableids",
     "github.com/googleapis/mcp-toolbox/internal/tools/bigquery/bigquerygettableinfo"
-  ]
+  ],
+  "go_image_role": "bootstrap"
 }
