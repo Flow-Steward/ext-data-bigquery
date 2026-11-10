@@ -3,7 +3,7 @@ set -eu
 cp -a /upstream /src
 cd /src
 git apply /out/scripts/patches/0000-security-baseline.patch
-printf '%s\n' '1c59a76307271df0a6992d9db406f9c49ba670dfb898e029bbc86136adcc9294  go.mod' 'd0e98fac8a9d4677bc239a668b472dd2f459ab65f3d0fec7ceb2a50bb6138841  go.sum' | sha256sum -c -
+printf '%s\n' 'f547c08375f72e483c269c214f1a5190a8d81237687455549f829aac5a8d7d51  go.mod' '5c713561f5dce0e9c5c38977c925f54c94a4bec1095642cb6d04baaa612beacd  go.sum' | sha256sum -c -
 export GOFLAGS=-mod=readonly GOTOOLCHAIN=local GOMAXPROCS=2
 test "$(go version | cut -d ' ' -f 3)" = go1.27.3
 git apply /out/scripts/patches/0000-approved-prebuilt-profiles.patch

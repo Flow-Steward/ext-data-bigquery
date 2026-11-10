@@ -79,7 +79,7 @@ def check_security_floor(version: str, modules: dict[str, str], raw: str) -> Non
         elif fields[0] == "=>" and previous in floors:
             raise ValueError(f"security-sensitive module has an unmodeled replacement: {previous}")
     def release(value):
-        match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?", value)
+        match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+incompatible)?", value)
         if not match:
             raise ValueError(f"unsupported native dependency version: {value}")
         return (*map(int, match.groups()[:3]), match[4] is None, match[4] or "")
@@ -108,7 +108,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     if profile != {"patch": "scripts/patches/0000-approved-prebuilt-profiles.patch", "sha256": profile_digest} or not profile_path.is_file() or profile_path.is_symlink() or hashlib.sha256(profile_path.read_bytes()).hexdigest() != profile_digest:
         raise ValueError("native approved profile baseline is missing or changed")
     baseline = provenance.get("security_baseline", {})
-    digest = "af406af0a861bea0b8e3d83e55fbdef9173cc01762788c6d06cc9b47eaa558e1"
+    digest = "958ad7a46b015c6520d1c60037c4e6fab41e756d417a618c612f08ac8806dfe7"
     if baseline != {"patch": "scripts/patches/0000-security-baseline.patch", "sha256": digest}:
         raise ValueError("native dependency baseline does not match provenance")
     path = root / baseline["patch"]

@@ -14,7 +14,7 @@ SPEC.loader.exec_module(NATIVE)
 
 
 def release_tuple(value):
-    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?", value)
+    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+incompatible)?", value)
     assert match, f"non-release dependency version: {value}"
     return (*map(int, match.groups()[:3]), match[4] is None, match[4] or "")
 
@@ -49,7 +49,7 @@ def test_shipped_binary_go_security_floor(target):
 def test_native_dependency_baseline_digest():
     baseline = ROOT / "scripts/patches/0000-security-baseline.patch"
     assert hashlib.sha256(baseline.read_bytes()).hexdigest() == (
-        "af406af0a861bea0b8e3d83e55fbdef9173cc01762788c6d06cc9b47eaa558e1"
+        "958ad7a46b015c6520d1c60037c4e6fab41e756d417a618c612f08ac8806dfe7"
     )
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())
     assert info["security_baseline"]["sha256"] == hashlib.sha256(baseline.read_bytes()).hexdigest()
