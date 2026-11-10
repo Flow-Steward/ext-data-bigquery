@@ -28,13 +28,13 @@ Write job IDs are deterministic hashes of account, project, connection, effect c
 
 ## Build and verification
 
-`./scripts/build_toolbox.sh` uses a digest-pinned Go 1.26.2 Docker image with 1 CPU/2 GiB. It builds only the BigQuery source and SQL tool imports for Linux AMD64 and ARM64, retaining upstream Apache licensing and patch provenance. The builder uses shared batch caches owned and cleaned by the batch coordinator. Each release ZIP contains exactly one target ELF, its checksum/provenance, Python source, public contracts, tests and the reproducible patch. Build with `TOOLBOX_SOURCE` pointing to an unmodified local checkout at the pinned commit. Package each target with `python3 scripts/package_extension.py --runtime-target linux-amd64` (or linux-arm64).
+`./scripts/build_toolbox.sh` uses a digest-pinned Go 1.26.10 Docker image with 1 CPU/2 GiB. It builds only the BigQuery source and SQL tool imports for Linux AMD64 and ARM64, retaining upstream Apache licensing and patch provenance. The builder uses shared batch caches owned and cleaned by the batch coordinator. Each release ZIP contains exactly one target ELF, its checksum/provenance, Python source, public contracts, tests and the reproducible patch. Build with `TOOLBOX_SOURCE` pointing to an unmodified local checkout at the pinned commit. Package each target with `python3 scripts/package_extension.py --runtime-target linux-amd64` (or linux-arm64).
 
 Offline tests cover host contracts, parameter guards, test-mode suppression, stable job identity, uncertainty and managed auth configuration; upstream BigQuery source, SQL tool and common utility unit suites plus added dry-run policy tests run in the native builder. Real Google Cloud integration is intentionally opt-in and skipped without credentials. No live BigQuery operation has been verified in this release environment; successful compilation and mock contracts do not imply cloud authentication, permission or service availability.
 
 References: [Google parameterized queries](https://cloud.google.com/bigquery/docs/parameterized-queries), [jobs.insert](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert), [jobs.get](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/get). API shapes were checked against those official references and pinned upstream source.
 
-## Datasets and Data Query (1.1.2)
+## Datasets and Data Query (1.1.3)
 
 BigQuery is also a read-only SQL dataset connector. Use the same project,
 location, allowed datasets, billing ceiling, timeout and Google credential fields
@@ -71,3 +71,5 @@ overflow instead of publishing an incomplete snapshot. Google IAM permissions
 are unchanged; existing credentials must already allow table metadata reads.
 Cloud-free tests exercise the host envelope, MCP subprocess bridge and native
 Google HTTP transport fixtures. They do not establish live Google Cloud access.
+
+This release requires host contract 1.5.0 or later for its artifact-free service declarations.

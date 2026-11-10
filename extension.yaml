@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "extension_id": "flowsteward.bigquery",
   "kind": "tool_provider",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "release_stage": "active",
   "display_name": "BigQuery",
   "description": "Read BigQuery datasets with scoped saved SQL; preserve parameterized SELECT, INSERT, UPDATE, DELETE and MERGE workflow actions.",
@@ -62,7 +62,7 @@
   "runtime": {
     "contract_version": "extension_host_v2",
     "compatibility": {
-      "platform_min": "1.4.0"
+      "platform_min": "1.5.0"
     },
     "extension_contract_v2": {
       "connection_types": "contracts/connection_types.yaml",

@@ -57,3 +57,12 @@ def test_executable_dataset_registry_declares_required_dataset_connector_feature
     assert "dataset_connector" in manifest["features"], (
         "Executable dataset_connectors require the public dataset_connector feature"
     )
+
+
+def test_artifact_free_services_declare_supported_host_minimum():
+    import json
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    for filename in ("extension.yaml", "extension-descriptor.yaml"):
+        contents = json.loads((root / filename).read_text())
+        assert contents["runtime"]["compatibility"]["platform_min"] == "1.5.0"

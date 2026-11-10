@@ -2,7 +2,7 @@
 # Pinned minimal BigQuery-only native build. Parent owns the shared caches.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-DEFAULT_GO_IMAGE=golang:1.26.2-bookworm@sha256:47ce5636e9936b2c5cbf708925578ef386b4f8872aec74a67bd13a627d242b19
+DEFAULT_GO_IMAGE=golang:1.26.10-bookworm@sha256:5de7c99eb78ca5e515a4c340235d0955ec5964a5071c492c15503d7c267da473
 GO_IMAGE=${GO_IMAGE:-$DEFAULT_GO_IMAGE}
 : "${FS_BIGQUERY_BUILD_NAME:?Parent must set a unique build container name}"
 : "${FS_BIGQUERY_GO_MOD_CACHE:?Parent must set an owned module cache volume}"
@@ -27,6 +27,10 @@ docker run --rm --name "$FS_BIGQUERY_BUILD_NAME" --cpus 1 --memory 2g \
  test "$(git rev-parse HEAD)" = b0010060a939455d91e4f8ba62dc3e72b1892469
  git diff --exit-code
  git diff --cached --exit-code
+ git apply /out/scripts/patches/0000-security-baseline.patch
+    printf "%s\n" "7f367f79f68cc28cfcb8c7d36c5533ef79f5016aaeba4443a795a46132105fb5  go.mod" "ca2ace78373b79e7c2b048e69ef22abfb93f1b3a537b7f035ad7c1a0c28542e9  go.sum" | sha256sum -c -
+ export GOFLAGS=-mod=readonly GOTOOLCHAIN=local
+ sha256sum go.mod go.sum > /tmp/fs-security-module-lock
  # Demonstrate native metadata regressions on the unmodified pinned tools.
  git apply /out/scripts/patches/0002-bigquery-metadata-red-tests.patch
  gofmt -w internal/tools/bigquery/bigquerylisttableids/flowsteward_metadata_test.go internal/tools/bigquery/bigquerygettableinfo/flowsteward_metadata_test.go
@@ -55,6 +59,7 @@ docker run --rm --name "$FS_BIGQUERY_BUILD_NAME" --cpus 1 --memory 2g \
   chmod 0755 /out/bin/linux-$arch/toolbox
   echo "[PASS] linux-$arch $(stat -c %s /out/bin/linux-$arch/toolbox) bytes"
  done
+ sha256sum -c /tmp/fs-security-module-lock
  '
 python3 - "$ROOT" "$GO_IMAGE" <<'PY'
 from pathlib import Path
@@ -66,3 +71,5 @@ for target in ('linux-amd64','linux-arm64'):
 (r/'toolbox-provenance.json').write_text(json.dumps(x,indent=2)+'\n')
 (r/'SHA256SUMS').write_text(''.join(record['sha256']+'  bin/'+target+'/toolbox\n' for target,record in x['binaries'].items()))
 PY
+
+python3 "$ROOT/scripts/native_build_info.py"

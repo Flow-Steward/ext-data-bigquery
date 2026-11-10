@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import stat
@@ -14,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 EXTENSION_ID = "flowsteward.bigquery"
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 TOP_FOLDER = "flowsteward_bigquery"
 SOURCE_DATE_EPOCH = 1779400183
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
@@ -100,6 +101,14 @@ def _native_metadata(root: Path, target: str) -> dict[str, str]:
     digest = sha256(binary)
     if record.get("sha256") != digest or record.get("size") != binary.stat().st_size:
         raise ValueError("Native executable SHA-256 or size does not match provenance")
+    # Read the actual ELF build information; truthful old provenance cannot bypass the floor.
+    helper_path = Path(__file__).resolve().with_name("native_build_info.py")
+    spec = importlib.util.spec_from_file_location("native_security_preflight", helper_path)
+    if spec is None or spec.loader is None:
+        raise ValueError("Native security preflight is unavailable")
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    helper.verify_security(root, target, provenance)
     return {"path": f"bin/{target}/toolbox", "sha256": digest}
 
 

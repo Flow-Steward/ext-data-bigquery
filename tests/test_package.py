@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import stat
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -38,16 +39,43 @@ def source(tmp_path):
     for target, machine in (("linux-amd64", 62), ("linux-arm64", 183)):
         path = root / "bin" / target / "toolbox"
         path.parent.mkdir(parents=True)
+        helper_spec = importlib.util.spec_from_file_location("fixture_native_info", ROOT / "scripts/native_build_info.py")
+        helper = importlib.util.module_from_spec(helper_spec)
+        helper_spec.loader.exec_module(helper)
+        version, modules, raw = helper.build_info(ROOT / "bin" / target / "toolbox")
+        def encoded(value):
+            data = value if isinstance(value, bytes) else value.encode()
+            length = len(data)
+            prefix = bytearray()
+            while length >= 128:
+                prefix.append((length & 127) | 128)
+                length >>= 7
+            prefix.append(length)
+            return bytes(prefix) + data
         data = bytearray(64)
         data[:6] = b"\x7fELF\x02\x01"
         data[18:20] = machine.to_bytes(2, "little")
+        data.extend(b"\xff Go buildinf:" + bytes([8, 2]) + bytes(16))
+        data.extend(encoded(version))
+        data.extend(encoded(bytes(16) + raw.encode() + bytes(16)))
         path.write_bytes(data)
         path.chmod(0o755)
         records[target] = {
             "sha256": hashlib.sha256(data).hexdigest(),
             "size": len(data),
+            "path": f"bin/{target}/toolbox",
+            "go_version": version,
+            "modules": modules,
+            "build_info": raw,
         }
-    (root / "toolbox-provenance.json").write_text(json.dumps({"binaries": records}))
+    provenance = json.loads((ROOT / "toolbox-provenance.json").read_text())
+    provenance["binaries"] = records
+    (root / "toolbox-provenance.json").write_text(json.dumps(provenance))
+    patch = Path("scripts/patches/0000-security-baseline.patch")
+    (root / patch).parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / patch, root / patch)
+    for name in ("native_build_info.py", "package_extension.py", "security-floor.json"):
+        shutil.copyfile(ROOT / "scripts" / name, root / "scripts" / name)
     return root
 
 
@@ -74,7 +102,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.2-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.3-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
@@ -247,3 +275,47 @@ def test_packaged_sql_dataset_query_dispatches_through_actual_core(tmp_path):
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("version", ["go1.26.2", "go1.27.0", "go1.27.1"])
+def test_package_command_rejects_unreviewed_runtime_with_truthful_provenance(source, tmp_path, version):
+    import subprocess
+    import sys
+    binary = source / "bin/linux-amd64/toolbox"
+    data = binary.read_bytes()
+    offset = data.index(b"\xff Go buildinf:") + 32
+    length = data[offset]
+    replacement = version.encode()
+    data = data[:offset] + bytes([len(replacement)]) + replacement + data[offset + 1 + length:]
+    binary.write_bytes(data)
+    info = json.loads((source / "toolbox-provenance.json").read_text())
+    info["binaries"]["linux-amd64"].update({
+        "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "go_version": version,
+    })
+    (source / "toolbox-provenance.json").write_text(json.dumps(info))
+    result = subprocess.run([
+        sys.executable, str(source / "scripts/package_extension.py"),
+        "--runtime-target", "linux-amd64", "--out-dir", str(tmp_path / "rejected"),
+    ], capture_output=True, text=True, check=False)
+    assert result.returncode == 2
+    assert "compiler is outside the reviewed security baseline" in result.stderr
+    assert not list((tmp_path / "rejected").glob("*.zip"))
+
+
+def test_packager_rejects_old_linked_module_with_truthful_provenance(source, tmp_path):
+    binary = source / "bin/linux-amd64/toolbox"
+    data = binary.read_bytes()
+    old = b"dep\tgolang.org/x/net\tv0.62.0\t"
+    new = b"dep\tgolang.org/x/net\tv0.53.0\t"
+    assert old in data
+    data = data.replace(old, new)
+    binary.write_bytes(data)
+    info = json.loads((source / "toolbox-provenance.json").read_text())
+    entry = info["binaries"]["linux-amd64"]
+    entry.update({"sha256": hashlib.sha256(data).hexdigest(), "size": len(data)})
+    entry["modules"]["golang.org/x/net"] = "v0.53.0"
+    entry["build_info"] = entry["build_info"].replace(old.decode(), new.decode())
+    (source / "toolbox-provenance.json").write_text(json.dumps(info))
+    with pytest.raises(ValueError, match="dependency is below the security baseline"):
+        packager().package_extension(source, "linux-amd64", tmp_path / "rejected")
+    assert not list((tmp_path / "rejected").glob("*.zip"))
