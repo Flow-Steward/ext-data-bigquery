@@ -1,0 +1,22 @@
+name: Release extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release (vX.Y.Z)
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: Flow-Steward/extensions/.github/workflows/release-extension.yml@52b0dca15912610fb8ef1908a1d46b9761952f2d
+    with:
+      tag: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}

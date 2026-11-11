@@ -81,3 +81,31 @@ Cloud-free tests exercise the host envelope, MCP subprocess bridge and native
 Google HTTP transport fixtures. They do not establish live Google Cloud access.
 
 This release requires host contract 1.5.0 or later for its artifact-free service declarations.
+
+## Automated CI and releases
+
+Pushes to `main` and pull requests run the shared extension build workflow. The checked-in `.github/release-config.json` selects both Linux targets, the repository's package script and test inputs. Missing native payloads and published-only inventory are restored from checksum-pinned release archives; tracked source files are preserved. The source packager retains its provenance checks.
+
+After the versioned release commit is on `main`, publish by pushing its version tag:
+
+```sh
+git tag v1.1.7
+git push origin v1.1.7
+```
+
+The release workflow runs the shared checks, builds the target archives and publishes the GitHub release and checksums. Do not move an existing tag. To rerun a release for an existing tag, dispatch the same workflow:
+
+```sh
+gh workflow run release.yml --repo Flow-Steward/ext-data-bigquery --ref main -f tag=v1.1.7
+```
+
+The manifest, descriptor (when present), package version and tag must identify the same release. Release publication uses the workflow token; no additional repository secret is required by these callers.
+
+### Standalone CI coverage
+
+The release recipe lists the standalone test files and individual test nodes explicitly, including package, source and provenance contracts. The shared runner clears repository pytest addopts so packaged contract checks are not silently deselected. This scope does not claim live provider or database verification.
+
+The following integration coverage requires a separate environment and is not part of standalone CI:
+
+- `tests/test_live.py`: Opt-in live provider/server test requires external credentials or a disposable service fixture.
+- `tests/test_package.py::test_packaged_sql_dataset_query_dispatches_through_actual_core`: Executes a Core validator/dispatcher with PYTHONPATH=/app and imports Core modules.
