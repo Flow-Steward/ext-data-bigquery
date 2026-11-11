@@ -2,10 +2,10 @@
   "manifest_version": 2,
   "extension_id": "flowsteward.bigquery",
   "kind": "tool_provider",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "release_stage": "active",
   "display_name": "BigQuery",
-  "description": "Read BigQuery datasets with scoped saved SQL; preserve parameterized SELECT, INSERT, UPDATE, DELETE and MERGE workflow actions.",
+  "description": "Bring BigQuery table data into Flow Steward for reporting, record lookup and workflow-driven data changes. Read-only Datasets support table and column discovery, saved SQL with named parameters, validation, previews, execution and output-schema inference. Separate workflow actions run one GoogleSQL SELECT or one INSERT, UPDATE, DELETE or MERGE, returning job identity and available row-count and processing metadata. Use query results in later workflow steps, or write calculated and collected data back to native BigQuery tables.\n\nThe connection selects one Google Cloud project, location and allowed datasets. Queries use ordinary native tables with fully qualified identifiers. Set a per-query bytes-billed ceiling to control each query's maximum billing exposure; this is not an account-wide spending limit. Authenticate using a matching service-account JSON key or a short-lived access token.\n\nDataset SQL reads one table with explicit columns, filters, ordering and a limit, without joins, functions or subqueries. The separate workflow query action accepts a broader supported GoogleSQL subset. Reads return at most 100 rows. Views, external tables, DDL, scripts and load/export jobs are outside this connector. Parameters support scalar strings, booleans and numbers.",
   "lifecycle": {
     "data_schema_version": 1,
     "data_migrations": []
@@ -19,7 +19,8 @@
       "bigquery",
       "toolbox"
     ],
-    "summary": "SQL datasets and saved queries; read, insert, update, delete and merge workflow data."
+    "summary": "Query BigQuery Datasets and run parameterized SELECT, INSERT, UPDATE, DELETE or MERGE workflow actions.",
+    "setup_summary": "Configure the Google project, BigQuery location, allowed datasets and per-query billing ceiling, then supply either service-account JSON or an access token with the necessary job, table-metadata and data permissions. Access-token renewal is your responsibility."
   },
   "features": [
     "tool",

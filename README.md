@@ -1,5 +1,13 @@
 # BigQuery workflow extension
 
+Bring BigQuery table data into Flow Steward for reporting, record lookup and workflow-driven data changes. Read-only Datasets support table and column discovery, saved SQL with named parameters, validation, previews, execution and output-schema inference. Separate workflow actions run one GoogleSQL SELECT or one INSERT, UPDATE, DELETE or MERGE, returning job identity and available row-count and processing metadata. Use query results in later workflow steps, or write calculated and collected data back to native BigQuery tables.
+
+The connection selects one Google Cloud project, location and allowed datasets. Queries use ordinary native tables with fully qualified identifiers. Set a per-query bytes-billed ceiling to control each query's maximum billing exposure; this is not an account-wide spending limit. Authenticate using a matching service-account JSON key or a short-lived access token.
+
+Dataset SQL reads one table with explicit columns, filters, ordering and a limit, without joins, functions or subqueries. The separate workflow query action accepts a broader supported GoogleSQL subset. Reads return at most 100 rows. Views, external tables, DDL, scripts and load/export jobs are outside this connector. Parameters support scalar strings, booleans and numbers.
+
+## Workflow SQL reference
+
 `flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.16.0 (`06ea49d9a487a72c22419b5a8d5c22c11f0d7485`) binary:
 
 - **Read rows (SELECT)**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
