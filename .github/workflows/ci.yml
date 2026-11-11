@@ -11,6 +11,6 @@ permissions:
 
 jobs:
   build:
-    uses: Flow-Steward/extensions/.github/workflows/build-extension.yml@62c05c526d5fb0bedad24105e493774e594a7007
+    uses: Flow-Steward/extensions/.github/workflows/build-extension.yml@14b5a23a3893191492e6dd5afff476a384e57545
     with:
       tag: ''
