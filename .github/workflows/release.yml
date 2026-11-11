@@ -17,6 +17,6 @@ permissions:
 
 jobs:
   release:
-    uses: Flow-Steward/extensions/.github/workflows/release-extension.yml@52b0dca15912610fb8ef1908a1d46b9761952f2d
+    uses: Flow-Steward/extensions/.github/workflows/release-extension.yml@62c05c526d5fb0bedad24105e493774e594a7007
     with:
       tag: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
