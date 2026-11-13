@@ -5,7 +5,7 @@
     "data_migrations": []
   },
   "extension_id": "flowsteward.bigquery",
-  "release_version": "1.1.7",
+  "release_version": "1.1.8",
   "extension_type": "service_extension",
   "identity": {
     "display_name": "BigQuery",
