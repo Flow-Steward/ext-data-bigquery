@@ -89,14 +89,14 @@ Pushes to `main` and pull requests run the shared extension build workflow. The 
 After the versioned release commit is on `main`, publish by pushing its version tag:
 
 ```sh
-git tag v1.1.7
-git push origin v1.1.7
+git tag v1.1.8
+git push origin v1.1.8
 ```
 
 The release workflow runs the shared checks, builds the target archives and publishes the GitHub release and checksums. Do not move an existing tag. To rerun a release for an existing tag, dispatch the same workflow:
 
 ```sh
-gh workflow run release.yml --repo Flow-Steward/ext-data-bigquery --ref main -f tag=v1.1.7
+gh workflow run release.yml --repo Flow-Steward/ext-data-bigquery --ref main -f tag=v1.1.8
 ```
 
 The manifest, descriptor (when present), package version and tag must identify the same release. Release publication uses the workflow token; no additional repository secret is required by these callers.
@@ -109,3 +109,7 @@ The following integration coverage requires a separate environment and is not pa
 
 - `tests/test_live.py`: Opt-in live provider/server test requires external credentials or a disposable service fixture.
 - `tests/test_package.py::test_packaged_sql_dataset_query_dispatches_through_actual_core`: Executes a Core validator/dispatcher with PYTHONPATH=/app and imports Core modules.
+
+## Workflow action setup and examples
+
+See [Workflow actions](docs/workflow-actions.md) for choosing Dataset reads versus explicit writes, connection requirements and copyable field examples.

@@ -104,7 +104,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.7-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.8-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:

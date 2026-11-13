@@ -2,8 +2,8 @@
   "operations": [
     {
       "operation_id": "query",
-      "display_name": "Read rows (SELECT)",
-      "description": "Run one bounded SELECT against allowed native tables. Up to 100 rows; truncated results require explicit follow-up.",
+      "display_name": "BigQuery: Read rows with a SELECT query",
+      "description": "Read up to 100 rows from one bounded SELECT, for example approved orders for a later workflow step. Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access. Example SQL: SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10. Use typed @named parameters and fully qualified backticked table names. The action does not modify database rows.",
       "operation_kind": "action",
       "workflow_visible": true,
       "connection_type_ids": [
@@ -15,24 +15,26 @@
           "name": "connection_ref",
           "value_type": "connection_ref",
           "required": true,
-          "display_name": "Connection"
+          "display_name": "BigQuery project connection",
+          "description": "Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access."
         },
         {
           "name": "statement",
           "value_type": "text",
           "required": true,
-          "display_name": "SQL statement",
+          "display_name": "SELECT query",
           "schema": {
             "type": "string",
             "minLength": 1,
             "maxLength": 65536
-          }
+          },
+          "description": "Enter one bounded SELECT. Example: SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10"
         },
         {
           "name": "parameters",
           "value_type": "json",
           "required": false,
-          "display_name": "Named typed parameters",
+          "display_name": "Named typed parameters (JSON array)",
           "schema": {
             "type": "array",
             "maxItems": 32,
@@ -61,7 +63,8 @@
                 "value": {}
               }
             }
-          }
+          },
+          "description": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"}]"
         }
       ],
       "outputs": [
@@ -134,8 +137,8 @@
     },
     {
       "operation_id": "write",
-      "display_name": "Write rows (INSERT, UPDATE, DELETE, MERGE)",
-      "description": "Run one INSERT, UPDATE, DELETE or MERGE. Durable effect claim required; writes are suppressed in test mode. On uncertain outcome inspect the returned job ID before any manual retry.",
+      "display_name": "BigQuery: Insert, update, delete or merge rows",
+      "description": "Write workflow results using one INSERT, UPDATE, DELETE or MERGE. Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access. Example SQL: UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id. Use typed @named parameters and fully qualified backticked table names. Test mode suppresses writes.",
       "operation_kind": "action",
       "workflow_visible": true,
       "connection_type_ids": [
@@ -147,24 +150,26 @@
           "name": "connection_ref",
           "value_type": "connection_ref",
           "required": true,
-          "display_name": "Connection"
+          "display_name": "BigQuery project connection",
+          "description": "Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access."
         },
         {
           "name": "statement",
           "value_type": "text",
           "required": true,
-          "display_name": "SQL statement",
+          "display_name": "SQL write statement",
           "schema": {
             "type": "string",
             "minLength": 1,
             "maxLength": 65536
-          }
+          },
+          "description": "Enter one supported write statement. Example: UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id"
         },
         {
           "name": "parameters",
           "value_type": "json",
           "required": false,
-          "display_name": "Named typed parameters",
+          "display_name": "Named typed parameters (JSON array)",
           "schema": {
             "type": "array",
             "maxItems": 32,
@@ -193,7 +198,8 @@
                 "value": {}
               }
             }
-          }
+          },
+          "description": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"},{\"name\":\"order_id\",\"type\":\"INT64\",\"value\":1042}]"
         }
       ],
       "outputs": [

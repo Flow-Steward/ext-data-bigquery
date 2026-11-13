@@ -3,8 +3,8 @@
     {
       "action_id": "query",
       "workflow_visible": true,
-      "title": "Read rows (SELECT)",
-      "description": "Run one bounded SELECT against allowed native tables. Up to 100 rows; truncated results require explicit follow-up.",
+      "title": "BigQuery: Read rows with a SELECT query",
+      "description": "Read up to 100 rows from one bounded SELECT, for example approved orders for a later workflow step. Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access. Example SQL: SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10. Use typed @named parameters and fully qualified backticked table names. The action does not modify database rows.",
       "required_scopes": [
         "extension:invoke"
       ],
@@ -15,17 +15,20 @@
         {
           "name": "connection_ref",
           "type": "string",
-          "required": true
+          "required": true,
+          "description": "Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access."
         },
         {
           "name": "statement",
           "type": "string",
-          "required": true
+          "required": true,
+          "description": "Enter one bounded SELECT. Example: SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10"
         },
         {
           "name": "parameters",
           "type": "array",
-          "required": false
+          "required": false,
+          "description": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"}]"
         }
       ],
       "result_fields": [
@@ -58,8 +61,8 @@
     {
       "action_id": "write",
       "workflow_visible": true,
-      "title": "Write rows (INSERT, UPDATE, DELETE, MERGE)",
-      "description": "Run one INSERT, UPDATE, DELETE or MERGE. Durable effect claim required; writes are suppressed in test mode. On uncertain outcome inspect the returned job ID before any manual retry.",
+      "title": "BigQuery: Insert, update, delete or merge rows",
+      "description": "Write workflow results using one INSERT, UPDATE, DELETE or MERGE. Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access. Example SQL: UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id. Use typed @named parameters and fully qualified backticked table names. Test mode suppresses writes.",
       "required_scopes": [
         "extension:invoke"
       ],
@@ -70,17 +73,20 @@
         {
           "name": "connection_ref",
           "type": "string",
-          "required": true
+          "required": true,
+          "description": "Select a BigQuery connection whose project, location and allowed datasets include the target table; use credentials with query and data access."
         },
         {
           "name": "statement",
           "type": "string",
-          "required": true
+          "required": true,
+          "description": "Enter one supported write statement. Example: UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id"
         },
         {
           "name": "parameters",
           "type": "array",
-          "required": false
+          "required": false,
+          "description": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"},{\"name\":\"order_id\",\"type\":\"INT64\",\"value\":1042}]"
         }
       ],
       "result_fields": [

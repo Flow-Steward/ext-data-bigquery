@@ -2,37 +2,45 @@
   "forms": [
     {
       "operation_id": "query",
-      "title": "Query rows",
+      "title": "BigQuery: Read rows with a SELECT query",
       "fields": [
         {
           "name": "statement",
           "widget_type": "textarea",
-          "label": "SQL statement",
-          "required": true
+          "label": "SELECT query",
+          "required": true,
+          "help_text": "Enter one bounded SELECT. Example: SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10",
+          "placeholder": "SELECT order_id, status FROM `demo-project.ops.orders` WHERE status = @status LIMIT 10"
         },
         {
           "name": "parameters",
           "widget_type": "json",
-          "label": "Named typed parameters",
-          "required": false
+          "label": "Named typed parameters (JSON array)",
+          "required": false,
+          "help_text": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"}]",
+          "placeholder": "[{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"}]"
         }
       ]
     },
     {
       "operation_id": "write",
-      "title": "Execute DML",
+      "title": "BigQuery: Insert, update, delete or merge rows",
       "fields": [
         {
           "name": "statement",
           "widget_type": "textarea",
-          "label": "SQL statement",
-          "required": true
+          "label": "SQL write statement",
+          "required": true,
+          "help_text": "Enter one supported write statement. Example: UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id",
+          "placeholder": "UPDATE `demo-project.ops.orders` SET status = @status WHERE order_id = @order_id"
         },
         {
           "name": "parameters",
           "widget_type": "json",
-          "label": "Named typed parameters",
-          "required": false
+          "label": "Named typed parameters (JSON array)",
+          "required": false,
+          "help_text": "Match every @name with one object containing name (without @), type and value. Supported types: STRING, INT64, FLOAT64, BOOL. Example: [{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"},{\"name\":\"order_id\",\"type\":\"INT64\",\"value\":1042}]",
+          "placeholder": "[{\"name\":\"status\",\"type\":\"STRING\",\"value\":\"approved\"},{\"name\":\"order_id\",\"type\":\"INT64\",\"value\":1042}]"
         }
       ]
     }
