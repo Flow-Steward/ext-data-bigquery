@@ -1,5 +1,5 @@
 diff --git a/go.mod b/go.mod
-index d121206abb..a2bad99055 100644
+index d121206abb..4afb96d2a6 100644
 --- a/go.mod
 +++ b/go.mod
 @@ -1,32 +1,30 @@
@@ -93,7 +93,7 @@ index d121206abb..a2bad99055 100644
 +	golang.org/x/mod v0.43.0
 +	golang.org/x/oauth2 v0.38.0
 +	golang.org/x/sync v0.25.0
-+	google.golang.org/api v0.314.0
++	google.golang.org/api v0.315.0
  	google.golang.org/genai v1.77.0
 -	google.golang.org/genproto v0.0.0-20261019180522-ce908d29299b
 -	google.golang.org/genproto/googleapis/api v0.0.0-20261019180522-ce908d29299b
@@ -320,7 +320,7 @@ index d121206abb..a2bad99055 100644
  	gopkg.in/ini.v1 v1.67.0 // indirect
  	modernc.org/libc v1.79.0 // indirect
 diff --git a/go.sum b/go.sum
-index 23e8997bf3..d0ec53c0d1 100644
+index 23e8997bf3..80f28b657a 100644
 --- a/go.sum
 +++ b/go.sum
 @@ -1,48 +1,48 @@
@@ -870,7 +870,7 @@ index 23e8997bf3..d0ec53c0d1 100644
  golang.org/x/time v0.16.0 h1:vMb6ptszcQMkcwiRTAuNNU50gom6++Q/6gY2hDM6VDE=
  golang.org/x/time v0.16.0/go.mod h1:rVKOqvZeKvrDKTQiAHJ7wmwP0RzleSphoEA9RcdLA0s=
  golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
-@@ -780,8 +777,8 @@ golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da h1:noIWHXmPHxILtqtCOPIhS
+@@ -780,8 +777,10 @@ golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da h1:noIWHXmPHxILtqtCOPIhS
  golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da/go.mod h1:NDW/Ps6MPRej6fsCIbMTohpP40sJ/P/vI1MoTEGwX90=
  gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
  gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
@@ -878,10 +878,12 @@ index 23e8997bf3..d0ec53c0d1 100644
 -google.golang.org/api v0.310.0/go.mod h1:5NUthU+LmGMKzYgRaScb+TTe1Lo7x4A+J7g+Yj8BRzA=
 +google.golang.org/api v0.314.0 h1:1P6RtsfXD7KfUUI7YxdGcJ5Ekw+QHH9dEVTHzWc96p0=
 +google.golang.org/api v0.314.0/go.mod h1:kn5kd1IMbs2x4hq99GcaTOumC0fnMYMwLNAfFxzpISU=
++google.golang.org/api v0.315.0 h1:77nwD4sln0GQQqQKb4CY+DJhRwA0AeQ4w0gkbLwRPms=
++google.golang.org/api v0.315.0/go.mod h1:kn5kd1IMbs2x4hq99GcaTOumC0fnMYMwLNAfFxzpISU=
  google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9YwlJXL52JkM=
  google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
  google.golang.org/genai v1.77.0 h1:/tWupb5vo4FRuktsgas4+Bfk5HhTGsfLoz2DS450aQA=
-@@ -789,12 +786,12 @@ google.golang.org/genai v1.77.0/go.mod h1:2j40fGpqPPIZNjaDKmjGGjYwCJi6Nm2ofmyP65
+@@ -789,12 +788,12 @@ google.golang.org/genai v1.77.0/go.mod h1:2j40fGpqPPIZNjaDKmjGGjYwCJi6Nm2ofmyP65
  google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8/go.mod h1:JiN7NxoALGmiZfu7CAH4rXhgtRTLTxftemlI0sWmxmc=
  google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98Agz4BDEuKkezgsaosCRResVns1a3J2ZsMNc=
  google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013/go.mod h1:NbSheEEYHJ7i3ixzK3sjbqSGDJWnxyFXZblF3eUsNvo=

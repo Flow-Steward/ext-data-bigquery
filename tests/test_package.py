@@ -104,7 +104,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.9-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.10-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
@@ -304,18 +304,24 @@ def test_package_command_rejects_unreviewed_runtime_with_truthful_provenance(sou
     assert not list((tmp_path / "rejected").glob("*.zip"))
 
 
-def test_packager_rejects_old_linked_module_with_truthful_provenance(source, tmp_path):
+@pytest.mark.parametrize("module,previous_version", [
+    ("golang.org/x/net", "v0.53.0"),
+    ("google.golang.org/api", "v0.314.0"),
+])
+def test_packager_rejects_old_linked_module_with_truthful_provenance(source, tmp_path, module, previous_version):
     binary = source / "bin/linux-amd64/toolbox"
     data = binary.read_bytes()
-    old = b"dep\tgolang.org/x/net\tv0.62.0\t"
-    new = b"dep\tgolang.org/x/net\tv0.53.0\t"
+    reviewed = json.loads((ROOT / "scripts/security-floor.json").read_text())["modules"][module]
+    old = f"dep\t{module}\t{reviewed}\t".encode()
+    new = f"dep\t{module}\t{previous_version}\t".encode()
+    assert len(old) == len(new)
     assert old in data
     data = data.replace(old, new)
     binary.write_bytes(data)
     info = json.loads((source / "toolbox-provenance.json").read_text())
     entry = info["binaries"]["linux-amd64"]
     entry.update({"sha256": hashlib.sha256(data).hexdigest(), "size": len(data)})
-    entry["modules"]["golang.org/x/net"] = "v0.53.0"
+    entry["modules"][module] = previous_version
     entry["build_info"] = entry["build_info"].replace(old.decode(), new.decode())
     (source / "toolbox-provenance.json").write_text(json.dumps(info))
     with pytest.raises(ValueError, match="dependency is below the security baseline"):

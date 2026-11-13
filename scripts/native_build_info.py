@@ -127,7 +127,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     if not selected_path.is_file() or selected_path.is_symlink() or json.loads(selected_path.read_text()) != selected:
         raise ValueError("native selected compiler metadata is missing or changed")
     baseline = provenance.get("security_baseline", {})
-    digest = "1d59fb359f69dc0a15d9e74b33347a60cd7328c60e53abfeb753faad264663fe"
+    digest = "c9437f65a0b046d7bb2065f5f64b5f878e4341b1d7eedf3075d8afac5a186fa6"
     if baseline != {"patch": "scripts/patches/0000-security-baseline.patch", "sha256": digest}:
         raise ValueError("native dependency baseline does not match provenance")
     path = root / baseline["patch"]

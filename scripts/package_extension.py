@@ -15,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 EXTENSION_ID = "flowsteward.bigquery"
-VERSION = "1.1.9"
+VERSION = "1.1.10"
 TOP_FOLDER = "flowsteward_bigquery"
 SOURCE_DATE_EPOCH = 1794536030
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
