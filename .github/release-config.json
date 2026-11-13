@@ -26,27 +26,10 @@
     "tests/test_runtime.py",
     "tests/test_security_floor.py",
     "tests/test_transport.py",
-    "tests/test_validation.py"
+    "tests/test_validation.py",
+    "tests/test_source_builder.py",
+    "tests/test_package.py::test_generated_native_metadata_is_required"
   ],
   "additional_assets": [],
-  "payload_sources": [
-    {
-      "target": "linux-amd64",
-      "url": "https://github.com/Flow-Steward/ext-data-bigquery/releases/download/v1.1.5/flowsteward.bigquery-1.1.5-linux-amd64.zip",
-      "bytes": 13722934,
-      "sha256": "1f93aab7a282b9bf33496e55031fbb7536bf8bcfc8fa0492585bd7276530e540",
-      "restore_paths": [
-        "bin/linux-amd64/toolbox"
-      ]
-    },
-    {
-      "target": "linux-arm64",
-      "url": "https://github.com/Flow-Steward/ext-data-bigquery/releases/download/v1.1.5/flowsteward.bigquery-1.1.5-linux-arm64.zip",
-      "bytes": 12346894,
-      "sha256": "89d3514c682200daeb200aeae255732c38cbc4ecf3b4bb7e3e406da172cccf55",
-      "restore_paths": [
-        "bin/linux-arm64/toolbox"
-      ]
-    }
-  ]
+  "payload_sources": []
 }

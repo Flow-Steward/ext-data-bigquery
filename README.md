@@ -8,7 +8,7 @@ Dataset SQL reads one table with explicit columns, filters, ordering and a limit
 
 ## Workflow SQL reference
 
-`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.16.0 (`06ea49d9a487a72c22419b5a8d5c22c11f0d7485`) binary:
+`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.17.0 (`45ed205cc8682ed066c82e0b65bcd0e8fc3becce`) binary:
 
 - **Read rows (SELECT)**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
 - **Write rows (INSERT, UPDATE, DELETE, MERGE)**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
@@ -89,14 +89,14 @@ Pushes to `main` and pull requests run the shared extension build workflow. The 
 After the versioned release commit is on `main`, publish by pushing its version tag:
 
 ```sh
-git tag v1.1.8
-git push origin v1.1.8
+git tag v1.1.9
+git push origin v1.1.9
 ```
 
 The release workflow runs the shared checks, builds the target archives and publishes the GitHub release and checksums. Do not move an existing tag. To rerun a release for an existing tag, dispatch the same workflow:
 
 ```sh
-gh workflow run release.yml --repo Flow-Steward/ext-data-bigquery --ref main -f tag=v1.1.8
+gh workflow run release.yml --repo Flow-Steward/ext-data-bigquery --ref main -f tag=v1.1.9
 ```
 
 The manifest, descriptor (when present), package version and tag must identify the same release. Release publication uses the workflow token; no additional repository secret is required by these callers.
@@ -113,3 +113,5 @@ The following integration coverage requires a separate environment and is not pa
 ## Workflow action setup and examples
 
 See [Workflow actions](docs/workflow-actions.md) for choosing Dataset reads versus explicit writes, connection requirements and copyable field examples.
+
+CI builds both Linux architectures from the pinned upstream checkout; it does not restore older release binaries. `scripts/build_toolbox.sh` clones the pinned tag automatically, or accepts a clean exact-commit checkout through `TOOLBOX_SOURCE` / `FS_TOOLBOX_SOURCE_DIR`. The build generates `toolbox-provenance.json`, `SHA256SUMS` and selected compiler metadata, which are included in release archives.

@@ -96,11 +96,11 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     expected = {"path": f"bin/{target}/toolbox", "go_version": version, "modules": modules, "build_info": raw}
     if any(entry.get(key) != value for key, value in expected.items()):
         raise ValueError("native build information does not match provenance")
-    if provenance.get("commit") != "06ea49d9a487a72c22419b5a8d5c22c11f0d7485":
+    if provenance.get("commit") != "45ed205cc8682ed066c82e0b65bcd0e8fc3becce":
         raise ValueError("native source commit does not match the reviewed baseline")
     if provenance.get("go_image") != "golang:1.27.3-bookworm@sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0":
         raise ValueError("native build image does not match the reviewed baseline")
-    if (provenance.get("source"), provenance.get("upstream_tag"), provenance.get("upstream_commit")) != ("https://github.com/googleapis/mcp-toolbox", "v1.16.0", "06ea49d9a487a72c22419b5a8d5c22c11f0d7485"):
+    if (provenance.get("source"), provenance.get("upstream_tag"), provenance.get("upstream_commit")) != ("https://github.com/googleapis/mcp-toolbox", "v1.17.0", "45ed205cc8682ed066c82e0b65bcd0e8fc3becce"):
         raise ValueError("native upstream source identity does not match the reviewed baseline")
     profile = provenance.get("approved_profiles", {})
     profile_path = root / "scripts/patches/0000-approved-prebuilt-profiles.patch"
@@ -127,7 +127,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     if not selected_path.is_file() or selected_path.is_symlink() or json.loads(selected_path.read_text()) != selected:
         raise ValueError("native selected compiler metadata is missing or changed")
     baseline = provenance.get("security_baseline", {})
-    digest = "958ad7a46b015c6520d1c60037c4e6fab41e756d417a618c612f08ac8806dfe7"
+    digest = "1d59fb359f69dc0a15d9e74b33347a60cd7328c60e53abfeb753faad264663fe"
     if baseline != {"patch": "scripts/patches/0000-security-baseline.patch", "sha256": digest}:
         raise ValueError("native dependency baseline does not match provenance")
     path = root / baseline["patch"]

@@ -255,7 +255,7 @@ def invoke(config, secrets, command, arguments, *, timeout_seconds):
                             "capabilities": {},
                             "clientInfo": {
                                 "name": "flowsteward.bigquery",
-                                "version": "1.1.7",
+                                "version": "1.1.9",
                             },
                         },
                     },

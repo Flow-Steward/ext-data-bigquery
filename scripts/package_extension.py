@@ -15,9 +15,9 @@ import zipfile
 from pathlib import Path
 
 EXTENSION_ID = "flowsteward.bigquery"
-VERSION = "1.1.8"
+VERSION = "1.1.9"
 TOP_FOLDER = "flowsteward_bigquery"
-SOURCE_DATE_EPOCH = 1793908560
+SOURCE_DATE_EPOCH = 1794536030
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
 MAX_UNCOMPRESSED_BYTES = 150 * 1024 * 1024
 MACHINES = {"linux-amd64": 62, "linux-arm64": 183}
@@ -136,6 +136,9 @@ def package_extension(root: Path, target: str, out_dir: Path) -> Path:
     for required in (
         "LICENSE",
         "NOTICE",
+        "toolbox-provenance.json",
+        "SHA256SUMS",
+        "scripts/go-toolchain-selected.json",
         "extension.yaml",
         "extension-descriptor.yaml",
     ):

@@ -35,14 +35,15 @@ def source(tmp_path):
         "main.py",
     ):
         (root / name).write_text("release fixture\n")
-    records = {}
     for target, machine in (("linux-amd64", 62), ("linux-arm64", 183)):
         path = root / "bin" / target / "toolbox"
         path.parent.mkdir(parents=True)
-        helper_spec = importlib.util.spec_from_file_location("fixture_native_info", ROOT / "scripts/native_build_info.py")
-        helper = importlib.util.module_from_spec(helper_spec)
-        helper_spec.loader.exec_module(helper)
-        version, modules, raw = helper.build_info(ROOT / "bin" / target / "toolbox")
+        # Synthetic ELF build information exercises the real reader and verifier
+        # without depending on a previously built native payload.
+        floor = json.loads((ROOT / "scripts/security-floor.json").read_text())
+        version = floor["go_version"]
+        modules = floor["modules"]
+        raw = "".join(f"dep\t{name}\t{value}\tfixture\n" for name, value in sorted(modules.items()))
         def encoded(value):
             data = value if isinstance(value, bytes) else value.encode()
             length = len(data)
@@ -60,24 +61,23 @@ def source(tmp_path):
         data.extend(encoded(bytes(16) + raw.encode() + bytes(16)))
         path.write_bytes(data)
         path.chmod(0o755)
-        records[target] = {
-            "sha256": hashlib.sha256(data).hexdigest(),
-            "size": len(data),
-            "path": f"bin/{target}/toolbox",
-            "go_version": version,
-            "modules": modules,
-            "build_info": raw,
-        }
-    provenance = json.loads((ROOT / "toolbox-provenance.json").read_text())
-    provenance["binaries"] = records
-    (root / "toolbox-provenance.json").write_text(json.dumps(provenance))
     patch = Path("scripts/patches/0000-security-baseline.patch")
     (root / patch).parent.mkdir(parents=True)
     shutil.copyfile(ROOT / patch, root / patch)
     approved = Path("scripts/patches/0000-approved-prebuilt-profiles.patch")
     shutil.copyfile(ROOT / approved, root / approved)
-    for name in ("native_build_info.py", "package_extension.py", "security-floor.json", "install-go-toolchain.sh", "go-toolchain-sources.json", "go-toolchain-selected.json"):
+    for name in ("native_build_info.py", "package_extension.py", "security-floor.json", "install-go-toolchain.sh", "go-toolchain-sources.json", "build-config.json", "provenance.py"):
         shutil.copyfile(ROOT / "scripts" / name, root / "scripts" / name)
+    for safety in (ROOT / "scripts/patches").glob("0001-*.patch"):
+        shutil.copyfile(safety, root / "scripts/patches" / safety.name)
+    sources = json.loads((root / "scripts/go-toolchain-sources.json").read_text())
+    archive = sources["archives"]["amd64"]
+    selected = {"version": sources["version"], "host_arch": "amd64", "url": archive["url"], "sha256": archive["sha256"]}
+    (root / "scripts/go-toolchain-selected.json").write_text(json.dumps(selected))
+    import subprocess
+    import sys
+    subprocess.run([sys.executable, str(root / "scripts/provenance.py")], check=True)
+    subprocess.run([sys.executable, str(root / "scripts/native_build_info.py")], check=True)
     return root
 
 
@@ -104,7 +104,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.8-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.9-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
@@ -321,3 +321,11 @@ def test_packager_rejects_old_linked_module_with_truthful_provenance(source, tmp
     with pytest.raises(ValueError, match="dependency is below the security baseline"):
         packager().package_extension(source, "linux-amd64", tmp_path / "rejected")
     assert not list((tmp_path / "rejected").glob("*.zip"))
+
+
+@pytest.mark.parametrize("metadata", ["SHA256SUMS", "scripts/go-toolchain-selected.json"])
+def test_generated_native_metadata_is_required(source, tmp_path, metadata):
+    (source / metadata).unlink()
+    with pytest.raises((ValueError, FileNotFoundError)):
+        packager().package_extension(source, "linux-amd64", tmp_path / "out")
+    assert not list((tmp_path / "out").glob("*.zip"))
