@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.11
+
+### Added
+
+- Added a Support tab with links for reporting a problem, asking a question or requesting a feature in this extension's GitHub repository, and what to include in a report.
+
 ## 1.1.10
 
 - Rebuild Linux AMD64 and ARM64 native payloads with google.golang.org/api v0.315.0 on the pinned Toolbox v1.17.0 and verified Go 1.27.4 baseline.
