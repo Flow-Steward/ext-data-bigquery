@@ -44,6 +44,7 @@ def source(tmp_path):
         version = floor["go_version"]
         modules = floor["modules"]
         raw = "".join(f"dep\t{name}\t{value}\tfixture\n" for name, value in sorted(modules.items()))
+
         def encoded(value):
             data = value if isinstance(value, bytes) else value.encode()
             length = len(data)
@@ -53,6 +54,7 @@ def source(tmp_path):
                 length >>= 7
             prefix.append(length)
             return bytes(prefix) + data
+
         data = bytearray(64)
         data[:6] = b"\x7fELF\x02\x01"
         data[18:20] = machine.to_bytes(2, "little")
@@ -66,16 +68,30 @@ def source(tmp_path):
     shutil.copyfile(ROOT / patch, root / patch)
     approved = Path("scripts/patches/0000-approved-prebuilt-profiles.patch")
     shutil.copyfile(ROOT / approved, root / approved)
-    for name in ("native_build_info.py", "package_extension.py", "security-floor.json", "install-go-toolchain.sh", "go-toolchain-sources.json", "build-config.json", "provenance.py"):
+    for name in (
+        "native_build_info.py",
+        "package_extension.py",
+        "security-floor.json",
+        "install-go-toolchain.sh",
+        "go-toolchain-sources.json",
+        "build-config.json",
+        "provenance.py",
+    ):
         shutil.copyfile(ROOT / "scripts" / name, root / "scripts" / name)
     for safety in (ROOT / "scripts/patches").glob("0001-*.patch"):
         shutil.copyfile(safety, root / "scripts/patches" / safety.name)
     sources = json.loads((root / "scripts/go-toolchain-sources.json").read_text())
     archive = sources["archives"]["amd64"]
-    selected = {"version": sources["version"], "host_arch": "amd64", "url": archive["url"], "sha256": archive["sha256"]}
+    selected = {
+        "version": sources["version"],
+        "host_arch": "amd64",
+        "url": archive["url"],
+        "sha256": archive["sha256"],
+    }
     (root / "scripts/go-toolchain-selected.json").write_text(json.dumps(selected))
     import subprocess
     import sys
+
     subprocess.run([sys.executable, str(root / "scripts/provenance.py")], check=True)
     subprocess.run([sys.executable, str(root / "scripts/native_build_info.py")], check=True)
     return root
@@ -104,7 +120,7 @@ def test_archive_is_reproducible_and_contains_one_declared_target(source, tmp_pa
     (source / "outside-link").symlink_to(tmp_path / "secret")
     first = module.package_extension(source, target, tmp_path / "one")
     second = module.package_extension(source, target, tmp_path / "two")
-    assert first.name == f"flowsteward.bigquery-1.1.11-{target}.zip"
+    assert first.name == f"flowsteward.bigquery-1.1.12-{target}.zip"
     assert first.read_bytes() == second.read_bytes()
     prefix = "flowsteward_bigquery/"
     with zipfile.ZipFile(first) as archive:
@@ -280,35 +296,56 @@ def test_packaged_sql_dataset_query_dispatches_through_actual_core(tmp_path):
 
 
 @pytest.mark.parametrize("version", ["go1.26.2", "go1.27.0", "go1.27.1"])
-def test_package_command_rejects_unreviewed_runtime_with_truthful_provenance(source, tmp_path, version):
+def test_package_command_rejects_unreviewed_runtime_with_truthful_provenance(
+    source, tmp_path, version
+):
     import subprocess
     import sys
+
     binary = source / "bin/linux-amd64/toolbox"
     data = binary.read_bytes()
     offset = data.index(b"\xff Go buildinf:") + 32
     length = data[offset]
     replacement = version.encode()
-    data = data[:offset] + bytes([len(replacement)]) + replacement + data[offset + 1 + length:]
+    data = data[:offset] + bytes([len(replacement)]) + replacement + data[offset + 1 + length :]
     binary.write_bytes(data)
     info = json.loads((source / "toolbox-provenance.json").read_text())
-    info["binaries"]["linux-amd64"].update({
-        "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "go_version": version,
-    })
+    info["binaries"]["linux-amd64"].update(
+        {
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "size": len(data),
+            "go_version": version,
+        }
+    )
     (source / "toolbox-provenance.json").write_text(json.dumps(info))
-    result = subprocess.run([
-        sys.executable, str(source / "scripts/package_extension.py"),
-        "--runtime-target", "linux-amd64", "--out-dir", str(tmp_path / "rejected"),
-    ], capture_output=True, text=True, check=False)
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(source / "scripts/package_extension.py"),
+            "--runtime-target",
+            "linux-amd64",
+            "--out-dir",
+            str(tmp_path / "rejected"),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     assert result.returncode == 2
     assert "compiler is outside the reviewed security baseline" in result.stderr
     assert not list((tmp_path / "rejected").glob("*.zip"))
 
 
-@pytest.mark.parametrize("module,previous_version", [
-    ("golang.org/x/net", "v0.53.0"),
-    ("google.golang.org/api", "v0.314.0"),
-])
-def test_packager_rejects_old_linked_module_with_truthful_provenance(source, tmp_path, module, previous_version):
+@pytest.mark.parametrize(
+    "module,previous_version",
+    [
+        ("golang.org/x/net", "v0.53.0"),
+        ("google.golang.org/api", "v0.314.0"),
+    ],
+)
+def test_packager_rejects_old_linked_module_with_truthful_provenance(
+    source, tmp_path, module, previous_version
+):
     binary = source / "bin/linux-amd64/toolbox"
     data = binary.read_bytes()
     reviewed = json.loads((ROOT / "scripts/security-floor.json").read_text())["modules"][module]
