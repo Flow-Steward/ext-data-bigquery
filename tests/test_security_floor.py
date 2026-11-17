@@ -1,4 +1,5 @@
 """Enforce the security floor against both actual shipped Go executables."""
+
 import hashlib
 import importlib.util
 import json
@@ -7,7 +8,9 @@ import re
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("native_build_info", ROOT / "scripts/native_build_info.py")
+SPEC = importlib.util.spec_from_file_location(
+    "native_build_info", ROOT / "scripts/native_build_info.py"
+)
 assert SPEC is not None and SPEC.loader is not None
 NATIVE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(NATIVE)
@@ -29,10 +32,16 @@ def test_shipped_binary_dependency_security_floor(target):
         if fields[0] == "dep":
             previous_module = fields[1]
         elif fields[0] == "=>" and previous_module in floor["modules"]:
-            raise AssertionError(f"security-sensitive module has an unmodeled replacement: {previous_module}")
+            raise AssertionError(
+                f"security-sensitive module has an unmodeled replacement: {previous_module}"
+            )
     for module, minimum in floor["modules"].items():
         if module in modules:
-            assert release_tuple(modules[module]) >= release_tuple(minimum), (module, modules[module], minimum)
+            assert release_tuple(modules[module]) >= release_tuple(minimum), (
+                module,
+                modules[module],
+                minimum,
+            )
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())["binaries"][target]
     assert info["path"] == f"bin/{target}/toolbox"
     assert info["go_version"] == version
@@ -49,7 +58,7 @@ def test_shipped_binary_go_security_floor(target):
 def test_native_dependency_baseline_digest():
     baseline = ROOT / "scripts/patches/0000-security-baseline.patch"
     assert hashlib.sha256(baseline.read_bytes()).hexdigest() == (
-        "c9437f65a0b046d7bb2065f5f64b5f878e4341b1d7eedf3075d8afac5a186fa6"
+        "45222098ca65d1e505eca3b6f1994d2fc718fef7bf399a2ae78f6e6b37b6f63b"
     )
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())
     assert info["security_baseline"]["sha256"] == hashlib.sha256(baseline.read_bytes()).hexdigest()

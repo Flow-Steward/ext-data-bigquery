@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.12
+
+- Rebuild Linux AMD64 and ARM64 native payloads with grpc-gateway v2.34.0 and its required YAML v4 and Go tooling module updates.
+- Preserve pinned Toolbox v1.17.0, verified Go 1.27.4, database safety controls and approved profiles.
+
 ## 1.1.11
 
 ### Added
