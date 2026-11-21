@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.13 - 2026-11-21
+
+- Refresh the reviewed Toolbox Go dependency lock and rebuild both Linux runtime targets.
+
 ## 1.1.12
 
 - Rebuild Linux AMD64 and ARM64 native payloads with grpc-gateway v2.34.0 and its required YAML v4 and Go tooling module updates.
