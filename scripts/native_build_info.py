@@ -137,7 +137,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
         raise ValueError("native upstream source identity does not match the reviewed baseline")
     profile = provenance.get("approved_profiles", {})
     profile_path = root / "scripts/patches/0000-approved-prebuilt-profiles.patch"
-    profile_digest = "df264c60006ad1a01812b427fb6a9593115ddd86227fc9522b8bae6731616aca"
+    profile_digest = "633a8c494bc01b2f9b8da00306246927b6b89d2ce78bf288269e53e8a60e5f84"
     if (
         profile
         != {
@@ -191,7 +191,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     ):
         raise ValueError("native selected compiler metadata is missing or changed")
     baseline = provenance.get("security_baseline", {})
-    digest = "ce1e86c90afb524e16a1e3898da4338c28b55f665efb6488c1e79f8152809059"
+    digest = "0d2cb00b8873d5d87bf45eba476bad7e7a5f92fe679de96356c94ef9aefa7b57"
     if baseline != {"patch": "scripts/patches/0000-security-baseline.patch", "sha256": digest}:
         raise ValueError("native dependency baseline does not match provenance")
     path = root / baseline["patch"]
