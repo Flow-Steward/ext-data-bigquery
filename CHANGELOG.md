@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.14 - 2026-11-24
+
+- Update the pinned Toolbox source to v1.18.0 and refresh the reviewed Linux AMD64 and ARM64 dependency locks.
+- Update Cloud SQL Connector, Spanner, LZ4 and the OpenTelemetry Auto SDK in the build graph.
+- Update development PyYAML to 6.0.4.
+
 ## 1.1.13 - 2026-11-21
 
 - Refresh the reviewed Toolbox Go dependency lock and rebuild both Linux runtime targets.

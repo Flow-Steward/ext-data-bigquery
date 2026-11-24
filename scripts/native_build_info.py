@@ -118,7 +118,7 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
     }
     if any(entry.get(key) != value for key, value in expected.items()):
         raise ValueError("native build information does not match provenance")
-    if provenance.get("commit") != "45ed205cc8682ed066c82e0b65bcd0e8fc3becce":
+    if provenance.get("commit") != "24762d91babd43d91afc3daeeece1cb446266c54":
         raise ValueError("native source commit does not match the reviewed baseline")
     if (
         provenance.get("go_image")
@@ -131,8 +131,8 @@ def verify_security(root: Path, target: str, provenance: dict) -> None:
         provenance.get("upstream_commit"),
     ) != (
         "https://github.com/googleapis/mcp-toolbox",
-        "v1.17.0",
-        "45ed205cc8682ed066c82e0b65bcd0e8fc3becce",
+        "v1.18.0",
+        "24762d91babd43d91afc3daeeece1cb446266c54",
     ):
         raise ValueError("native upstream source identity does not match the reviewed baseline")
     profile = provenance.get("approved_profiles", {})

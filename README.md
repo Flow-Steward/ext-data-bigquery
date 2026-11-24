@@ -8,7 +8,7 @@ Dataset SQL reads one table with explicit columns, filters, ordering and a limit
 
 ## Workflow SQL reference
 
-`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.17.0 (`45ed205cc8682ed066c82e0b65bcd0e8fc3becce`) binary:
+`flowsteward.bigquery` provides two host-v2 actions through a minimal, patched Google MCP Toolbox v1.18.0 (`24762d91babd43d91afc3daeeece1cb446266c54`) binary:
 
 - **Read rows (SELECT)**: one GoogleSQL SELECT, up to 100 rows, with job metadata and an explicit `truncated` flag.
 - **Write rows (INSERT, UPDATE, DELETE, MERGE)**: one INSERT, UPDATE, DELETE or MERGE. Requires a durable external-effect claim and is suppressed before I/O in test mode.
@@ -89,8 +89,8 @@ Pushes to `main` and pull requests run the shared extension build workflow. The 
 After the versioned release commit is on `main`, publish by pushing its version tag:
 
 ```sh
-git tag v1.1.13
-git push origin v1.1.13
+git tag v1.1.14
+git push origin v1.1.14
 ```
 
 The release workflow runs the shared checks, builds the target archives and publishes the GitHub release and checksums. Do not move an existing tag. To rerun a release for an existing tag, dispatch the same workflow:
