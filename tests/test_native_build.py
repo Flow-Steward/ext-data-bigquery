@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_native_provenance():
     info = json.loads((ROOT / "toolbox-provenance.json").read_text())
-    assert info["commit"] == "45ed205cc8682ed066c82e0b65bcd0e8fc3becce"
+    assert info["commit"] == "24762d91babd43d91afc3daeeece1cb446266c54"
     assert len(info["packages"]) == 4
     assert hashlib.sha256((ROOT / info["patch"]).read_bytes()).hexdigest() == info["patch_sha256"]
     for target, machine in [("linux-amd64", 62), ("linux-arm64", 183)]:

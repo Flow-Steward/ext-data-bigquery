@@ -4,7 +4,7 @@ sh /out/scripts/install-go-toolchain.sh /out/scripts/go-toolchain-selected.json
 cp -a /upstream /src
 cd /src
 git apply /out/scripts/patches/0000-security-baseline.patch
-printf '%s\n' '0d997052841250a5fb61f4beff492ff43b8d4d4db605b456211a78bc0a1ca758  go.mod' '6d67d8d090d3b46ea71fa92c9f7184a963010508d6fea57ce06756c01e583ec3  go.sum' | sha256sum -c -
+printf '%s\n' '9374d17aeca42ed79b512f7f275fffd610c9baad75ac82aa48828f48beec0a9c  go.mod' 'a0009615d1ec9d4f3571c251e7c094702fc4569ce244b6a34f42e8e749c28ecd  go.sum' | sha256sum -c -
 export GOFLAGS=-mod=readonly GOTOOLCHAIN=local GOMAXPROCS=2
 test "$(go version | cut -d ' ' -f 3)" = go1.27.4
 git apply /out/scripts/patches/0000-approved-prebuilt-profiles.patch
@@ -22,11 +22,11 @@ IMPORTS
 test "$(grep -c 'internal/' cmd/internal/imports.go)" = 4
 sha256sum go.mod go.sum > /tmp/fs-module-lock
 go test -p 1 ./internal/sources/bigquery ./internal/tools/bigquery/bigquerycommon ./internal/tools/bigquery/bigquerysql ./internal/tools/bigquery/bigquerylisttableids ./internal/tools/bigquery/bigquerygettableinfo -count=1
-export SOURCE_DATE_EPOCH=1794536030
+export SOURCE_DATE_EPOCH=1795211695
 for target in linux-amd64 linux-arm64; do
  arch=${target#linux-}
  mkdir -p /out/bin/$target
- CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -p 1 -trimpath -buildvcs=false -ldflags "-s -w -buildid= -X github.com/googleapis/mcp-toolbox/cmd.buildType=flowsteward.bigquery -X github.com/googleapis/mcp-toolbox/cmd.commitSha=45ed205cc8682ed066c82e0b65bcd0e8fc3becce" -o /out/bin/$target/toolbox .
+ CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -p 1 -trimpath -buildvcs=false -ldflags "-s -w -buildid= -X github.com/googleapis/mcp-toolbox/cmd.buildType=flowsteward.bigquery -X github.com/googleapis/mcp-toolbox/cmd.commitSha=24762d91babd43d91afc3daeeece1cb446266c54" -o /out/bin/$target/toolbox .
  chmod 0755 /out/bin/$target/toolbox
  echo "[PASS] $target $(stat -c %s /out/bin/$target/toolbox) bytes"
 done

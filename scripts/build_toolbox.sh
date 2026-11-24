@@ -1,16 +1,16 @@
 #!/bin/sh
-# Reviewed v1.17.0 source, reviewed module graph; official Go1.27.4 installed over bootstrap, and connector-only registrations.
+# Reviewed v1.18.0 source, reviewed module graph; official Go1.27.4 installed over bootstrap, and connector-only registrations.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 BOOTSTRAP_IMAGE=golang:1.27.3-bookworm@sha256:dc0963f32053e4bc451d24d87e3892d42d01021b61f093e98eb95c0352bb84b0
-TOOLBOX_COMMIT=45ed205cc8682ed066c82e0b65bcd0e8fc3becce
+TOOLBOX_COMMIT=24762d91babd43d91afc3daeeece1cb446266c54
 SOURCE=${TOOLBOX_SOURCE:-${FS_TOOLBOX_SOURCE_DIR:-}}
 TEMP_SOURCE=
 cleanup() { if test -n "$TEMP_SOURCE"; then rm -rf -- "$TEMP_SOURCE"; fi; }
 trap cleanup EXIT HUP INT TERM
 if test -z "$SOURCE"; then
  TEMP_SOURCE=$(mktemp -d "${TMPDIR:-/tmp}/fs-toolbox-source.XXXXXX")
- git clone --quiet --depth 1 --branch v1.17.0 https://github.com/googleapis/mcp-toolbox.git "$TEMP_SOURCE/upstream"
+ git clone --quiet --depth 1 --branch v1.18.0 https://github.com/googleapis/mcp-toolbox.git "$TEMP_SOURCE/upstream"
  SOURCE=$TEMP_SOURCE/upstream
 fi
 SOURCE=$(CDPATH= cd -- "$SOURCE" && pwd)
